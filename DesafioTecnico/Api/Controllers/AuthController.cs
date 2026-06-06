@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using DesafioTecnico.Api.DTOs;
-using DesafioTecnico.Infraestructure.Services;
 
 namespace DesafioTecnico.Api.Controllers
 {
@@ -10,9 +9,9 @@ namespace DesafioTecnico.Api.Controllers
     [AllowAnonymous]
     public class AuthController : ControllerBase
     {
-        private readonly AuthService _authService;
+        private readonly Infraestructure.Services.Interfaces.IAuthService _authService;
 
-        public AuthController(AuthService authService)
+        public AuthController(Infraestructure.Services.Interfaces.IAuthService authService)
         {
             _authService = authService;
         }
@@ -22,10 +21,10 @@ namespace DesafioTecnico.Api.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var token = await _authService.AuthenticateAsync(request.Username, request.Password);
-            if (token == null) return Unauthorized();
+            var result = await _authService.AuthenticateAsync(request.Username, request.Password);
+            if (result == null) return Unauthorized();
 
-            return Ok(new LoginResponse { Token = token, ExpiresIn = "" });
+            return Ok(new LoginResponse { Token = result.Value.Token, ExpiresIn = result.Value.ExpiresInSeconds });
         }
     }
 }

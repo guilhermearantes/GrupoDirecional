@@ -25,7 +25,7 @@ namespace Tests.Fixtures
             return new DesafioTecnico.Domain.Entities.Apartamento
             {
                 Id = Guid.NewGuid(),
-                Codigo = "A-101",
+                Codigo = $"TEST-{Guid.NewGuid():N}"[..12],
                 Bloco = "A",
                 Andar = 1,
                 Area = 75.5m,

@@ -4,7 +4,7 @@ using DesafioTecnico.Infraestructure.Security;
 
 namespace DesafioTecnico.Infraestructure.Services
 {
-    public class AuthService
+    public class AuthService : DesafioTecnico.Infraestructure.Services.Interfaces.IAuthService
     {
         private readonly AppDbContext _context;
         private readonly JwtTokenGenerator _tokenGenerator;
@@ -15,15 +15,16 @@ namespace DesafioTecnico.Infraestructure.Services
             _tokenGenerator = tokenGenerator;
         }
 
-        public async Task<string?> AuthenticateAsync(string username, string password)
+        public async Task<(string Token, int ExpiresInSeconds)?> AuthenticateAsync(string username, string password)
         {
             var user = await _context.Usuarios.FirstOrDefaultAsync(u => u.Username == username);
             if (user == null) return null;
 
-            // Verifica hash usando BCrypt
             if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash)) return null;
 
-            return _tokenGenerator.GenerateToken(user);
+            var token = _tokenGenerator.GenerateToken(user);
+            var expiresInSeconds = _tokenGenerator.GetExpiryMinutes() * 60;
+            return (token, expiresInSeconds);
         }
     }
 }

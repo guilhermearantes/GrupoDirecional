@@ -5,10 +5,10 @@ services:
     image: mcr.microsoft.com/mssql/server:2019-latest
     container_name: desafio-sqlserver
     environment:
-      SA_PASSWORD: "Your_password123"
+      SA_PASSWORD: "${SA_PASSWORD:-Grup0D!reCional2026}"
       ACCEPT_EULA: "Y"
     ports:
-      - "1433:1433"
+      - "14333:1433"
     healthcheck:
       test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P \"$SA_PASSWORD\" -Q \"SELECT 1\" || exit 1"]
       interval: 10s
@@ -22,13 +22,28 @@ services:
       dockerfile: DesafioTecnico/Dockerfile
     container_name: desafio-api
     depends_on:
-      sqlserver:
-        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
     environment:
-      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=DesafioTecnicoDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
-      Jwt__Key: "REPLACE_WITH_SECURE_KEY_CHANGE_IN_PROD"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=DesafioTecnicoDb;User Id=sa;Password=${SA_PASSWORD:-Grup0D!reCional2026};TrustServerCertificate=True;"
+      Jwt__Key: "very_secret_key_replace_this_long_enough_to_be_secure_and_at_least_32_chars"
       Jwt__Issuer: "DesafioTecnicoApi"
       Jwt__Audience: "DesafioTecnicoApiUsers"
     ports:
-      - "5000:80"
+      - "8080:8080"
     restart: unless-stopped
+
+  migrations:
+    image: mcr.microsoft.com/dotnet/sdk:9.0
+    container_name: desafio-migrations
+    depends_on:
+      - sqlserver
+    volumes:
+      - ./:/src
+    working_dir: /src/DesafioTecnico
+    command: ["/bin/bash", "-lc", "./scripts/run-migrations.sh"]
+    environment:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=DesafioTecnicoDb;User Id=sa;Password=${SA_PASSWORD:-Grup0D!reCional2026};TrustServerCertificate=True;"
+      Jwt__Key: "very_secret_key_replace_this_long_enough_to_be_secure_and_at_least_32_chars"
+    restart: "no"

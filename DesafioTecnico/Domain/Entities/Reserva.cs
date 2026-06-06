@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace DesafioTecnico.Domain.Entities
+﻿namespace DesafioTecnico.Domain.Entities
 {
     public class Reserva
     {

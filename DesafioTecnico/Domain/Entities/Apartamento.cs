@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace DesafioTecnico.Domain.Entities
+﻿namespace DesafioTecnico.Domain.Entities
 {
     public class Apartamento
     {
@@ -10,7 +8,7 @@ namespace DesafioTecnico.Domain.Entities
         public int Andar { get; set; }
         public decimal Area { get; set; }
         public decimal Valor { get; set; }
-        public Domain.Enums.StatusApartamento Status { get; set; }
+        public Enums.StatusApartamento Status { get; set; }
 
         public ICollection<Reserva> Reservas { get; set; } = new List<Reserva>();
         public ICollection<Venda> Vendas { get; set; } = new List<Venda>();

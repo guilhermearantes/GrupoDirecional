@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace DesafioTecnico.Api.DTOs
 {
@@ -23,6 +22,7 @@ namespace DesafioTecnico.Api.DTOs
         public string Email { get; set; } = string.Empty;
 
         [Required]
+        [RegularExpression(@"^\d{3}\.\d{3}\.\d{3}-\d{2}$", ErrorMessage = "CPF deve estar no formato NNN.NNN.NNN-NN")]
         public string Cpf { get; set; } = string.Empty;
 
         [Required]

@@ -1,0 +1,56 @@
+name: Integration CI
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  integration-tests:
+    name: Integration tests (Docker SQL Server) - Manual
+    runs-on: ubuntu-latest
+    env:
+      SA_PASSWORD: Grup0D!reCional2026
+      TEST_DB_SA_PASSWORD: ${{ env.SA_PASSWORD }}
+      TEST_DB_PORT: 1433
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2019-latest
+        env:
+          ACCEPT_EULA: "Y"
+          SA_PASSWORD: ${{ env.SA_PASSWORD }}
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P \"$${SA_PASSWORD}\" -Q \"SELECT 1\""
+          --health-interval 10s --health-timeout 5s --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Wait for SQL Server to be ready
+        run: |
+          echo "Waiting for SQL Server..."
+          for i in {1..120}; do
+            /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "${{ env.SA_PASSWORD }}" -Q "SELECT 1" >/dev/null 2>&1 && break || sleep 1
+          done
+
+      - name: Install dotnet-ef
+        run: |
+          dotnet tool install --global dotnet-ef --version 9.0.0 || true
+          echo "::add-path::${HOME}/.dotnet/tools"
+
+      - name: Apply EF Migrations
+        run: |
+          export PATH="$HOME/.dotnet/tools:$PATH"
+          dotnet ef database update --no-build --project DesafioTecnico/DesafioTecnico.csproj --connection "Server=localhost,1433;Database=DesafioTecnicoDb;User Id=sa;Password=${{ env.SA_PASSWORD }};TrustServerCertificate=True;"
+
+      - name: Run integration tests
+        run: |
+          export TEST_DB_SA_PASSWORD=${{ env.SA_PASSWORD }}
+          export TEST_DB_PORT=1433
+          dotnet test Tests/Tests.csproj --filter "Category=Integration" --verbosity normal

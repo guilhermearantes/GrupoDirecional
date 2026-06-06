@@ -24,8 +24,10 @@ namespace DesafioTecnico.Infraestructure.Services
 
         public async Task<Venda> CreateAsync(Venda venda)
         {
-            var available = await _apartRepo.IsAvailableAsync(venda.ApartamentoId);
-            if (!available) throw new InvalidOperationException("Apartamento não disponível");
+            // Allow sale if apartment exists and is not already sold. Reservado is allowed (confirmation flow).
+            var aptCheck = await _apartRepo.GetByIdAsync(venda.ApartamentoId);
+            if (aptCheck == null) throw new InvalidOperationException("Apartamento não encontrado");
+            if (aptCheck.Status == Domain.Enums.StatusApartamento.Vendido) throw new InvalidOperationException("Apartamento não disponível");
 
             venda.Id = Guid.NewGuid();
             venda.DataVenda = DateTime.UtcNow;

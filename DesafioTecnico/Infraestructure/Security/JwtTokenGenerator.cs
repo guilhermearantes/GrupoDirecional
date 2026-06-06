@@ -16,12 +16,14 @@ namespace DesafioTecnico.Infraestructure.Security
             _config = config;
         }
 
+        public int GetExpiryMinutes() => int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
+
         public string GenerateToken(Usuario user)
         {
-            var key = _config["Jwt:Key"];
+            var key = _config["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured");
             var issuer = _config["Jwt:Issuer"];
             var audience = _config["Jwt:Audience"];
-            var expiryMinutes = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
+            var expiryMinutes = GetExpiryMinutes();
 
             var claims = new[] {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Username),

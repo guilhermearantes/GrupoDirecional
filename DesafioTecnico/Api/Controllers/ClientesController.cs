@@ -39,7 +39,7 @@ namespace DesafioTecnico.Api.Controllers
         public async Task<ActionResult> Post([FromBody] ClienteCreateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            var entity = _mapper.Map<DesafioTecnico.Domain.Entities.Cliente>(dto);
+            var entity = _mapper.Map<Domain.Entities.Cliente>(dto);
             await _service.CreateAsync(entity);
             return CreatedAtAction(nameof(Get), new { id = entity.Id }, _mapper.Map<ClienteReadDto>(entity));
         }

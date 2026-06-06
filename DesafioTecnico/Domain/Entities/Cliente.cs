@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace DesafioTecnico.Domain.Entities
+﻿namespace DesafioTecnico.Domain.Entities
 {
     public class Cliente
     {

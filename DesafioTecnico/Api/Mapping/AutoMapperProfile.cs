@@ -20,6 +20,9 @@ namespace DesafioTecnico.Api.Mapping
             CreateMap<Venda, VendaReadDto>();
             CreateMap<VendaCreateDto, Venda>();
             CreateMap<VendaUpdateDto, Venda>();
+
+            CreateMap<Reserva, ReservaReadDto>();
+            CreateMap<ReservaCreateDto, Reserva>();
         }
     }
 }
