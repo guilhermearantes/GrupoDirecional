@@ -83,6 +83,13 @@ if (!app.Environment.IsEnvironment("IntegrationTests"))
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    if (app.Environment.IsDevelopment())
+    {
+        // Migrations target SQL Server and cannot be applied to SQLite;
+        // keep the connection open so EnsureCreated and the seed share the same handle.
+        db.Database.OpenConnection();
+        db.Database.EnsureCreated();
+    }
     SeedData.EnsureSeedData(db);
 }
 
