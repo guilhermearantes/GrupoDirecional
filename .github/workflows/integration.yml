@@ -8,19 +8,19 @@ jobs:
     name: Integration tests (Docker SQL Server) - Manual
     runs-on: ubuntu-latest
     env:
-      SA_PASSWORD: Grup0D!reCional2026
-      TEST_DB_SA_PASSWORD: ${{ env.SA_PASSWORD }}
+      SA_PASSWORD: ${{ secrets.SA_PASSWORD || 'Grup0D!reCional2026' }}
+      TEST_DB_SA_PASSWORD: ${{ secrets.SA_PASSWORD || 'Grup0D!reCional2026' }}
       TEST_DB_PORT: 1433
     services:
       sqlserver:
         image: mcr.microsoft.com/mssql/server:2019-latest
         env:
           ACCEPT_EULA: "Y"
-          SA_PASSWORD: ${{ env.SA_PASSWORD }}
+          SA_PASSWORD: ${{ secrets.SA_PASSWORD || 'Grup0D!reCional2026' }}
         ports:
           - 1433:1433
         options: >-
-          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P \"$${SA_PASSWORD}\" -Q \"SELECT 1\""
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P \"Grup0D!reCional2026\" -Q \"SELECT 1\""
           --health-interval 10s --health-timeout 5s --health-retries 10
 
     steps:
@@ -32,25 +32,25 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Wait for SQL Server to be ready
-        run: |
-          echo "Waiting for SQL Server..."
-          for i in {1..120}; do
-            /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "${{ env.SA_PASSWORD }}" -Q "SELECT 1" >/dev/null 2>&1 && break || sleep 1
-          done
+      - name: Restore and Build
+        run: dotnet build -c Release
 
       - name: Install dotnet-ef
         run: |
           dotnet tool install --global dotnet-ef --version 9.0.0 || true
-          echo "::add-path::${HOME}/.dotnet/tools"
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+      - name: Wait for SQL Server to be ready
+        run: |
+          echo "Waiting for SQL Server..."
+          for i in {1..120}; do
+            /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -Q "SELECT 1" >/dev/null 2>&1 && echo "Ready!" && break || sleep 1
+          done
 
       - name: Apply EF Migrations
         run: |
-          export PATH="$HOME/.dotnet/tools:$PATH"
-          dotnet ef database update --no-build --project DesafioTecnico/DesafioTecnico.csproj --connection "Server=localhost,1433;Database=DesafioTecnicoDb;User Id=sa;Password=${{ env.SA_PASSWORD }};TrustServerCertificate=True;"
+          dotnet ef database update --project DesafioTecnico/DesafioTecnico.csproj \
+            --connection "Server=localhost,1433;Database=DesafioTecnicoDb;User Id=sa;Password=$SA_PASSWORD;TrustServerCertificate=True;"
 
       - name: Run integration tests
-        run: |
-          export TEST_DB_SA_PASSWORD=${{ env.SA_PASSWORD }}
-          export TEST_DB_PORT=1433
-          dotnet test Tests/Tests.csproj --filter "Category=Integration" --verbosity normal
+        run: dotnet test Tests/Tests.csproj --no-build --filter "Category=Integration" --verbosity normal

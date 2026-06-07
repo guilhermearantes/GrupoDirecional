@@ -21,9 +21,14 @@ namespace DesafioTecnico.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ApartamentoReadDto>>> Get()
+        public async Task<ActionResult<IEnumerable<ApartamentoReadDto>>> Get([FromQuery] string? status = null)
         {
             var items = await _service.GetAllAsync();
+            if (!string.IsNullOrEmpty(status) &&
+                Enum.TryParse<DesafioTecnico.Domain.Enums.StatusApartamento>(status, ignoreCase: true, out var statusEnum))
+            {
+                items = items.Where(a => a.Status == statusEnum);
+            }
             return Ok(_mapper.Map<IEnumerable<ApartamentoReadDto>>(items));
         }
 

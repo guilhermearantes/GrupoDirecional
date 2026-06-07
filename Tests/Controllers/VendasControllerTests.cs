@@ -65,7 +65,7 @@ namespace Tests.Controllers
             _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((DesafioTecnico.Domain.Entities.Venda?)null);
             var controller = new VendasController(_serviceMock.Object, _mapper);
 
-            var dto = new DesafioTecnico.Api.DTOs.VendaUpdateDto { ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), ValorPago = 200m };
+            var dto = new DesafioTecnico.Api.DTOs.VendaUpdateDto { ValorPago = 200m };
             var res = await controller.Put(Guid.NewGuid(), dto);
 
             Assert.IsType<NotFoundResult>(res);
@@ -79,7 +79,7 @@ namespace Tests.Controllers
             _serviceMock.Setup(s => s.UpdateAsync(It.IsAny<DesafioTecnico.Domain.Entities.Venda>())).Returns(Task.CompletedTask).Verifiable();
 
             var controller = new VendasController(_serviceMock.Object, _mapper);
-            var dto = new DesafioTecnico.Api.DTOs.VendaUpdateDto { ClienteId = venda.ClienteId, ApartamentoId = venda.ApartamentoId, ValorPago = venda.ValorPago };
+            var dto = new DesafioTecnico.Api.DTOs.VendaUpdateDto { ValorPago = 250m };
 
             var res = await controller.Put(venda.Id, dto);
 

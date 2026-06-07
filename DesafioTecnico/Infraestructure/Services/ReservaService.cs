@@ -1,20 +1,23 @@
-﻿namespace DesafioTecnico.Infraestructure.Services
+namespace DesafioTecnico.Infraestructure.Services
 {
     using DesafioTecnico.Infraestructure.Repositories.Interfaces;
     using DesafioTecnico.Domain.Entities;
+    using DesafioTecnico.Infraestructure.Data;
     using DesafioTecnico.Infraestructure.Services.Interfaces;
 
     public class ReservaService : IReservaService
     {
+        private readonly AppDbContext _context;
         private readonly IReservaRepository _reservaRepo;
         private readonly IApartamentoRepository _apartRepo;
-        private readonly IVendaService _vendaService;
+        private readonly IVendaRepository _vendaRepo;
 
-        public ReservaService(IReservaRepository reservaRepo, IApartamentoRepository apartRepo, IVendaService vendaService)
+        public ReservaService(AppDbContext context, IReservaRepository reservaRepo, IApartamentoRepository apartRepo, IVendaRepository vendaRepo)
         {
+            _context = context;
             _reservaRepo = reservaRepo;
             _apartRepo = apartRepo;
-            _vendaService = vendaService;
+            _vendaRepo = vendaRepo;
         }
 
         public Task<IEnumerable<Reserva>> GetAllAsync() => _reservaRepo.GetAllAsync();
@@ -48,18 +51,43 @@
             if (reserva == null) throw new InvalidOperationException("Reserva não encontrada");
             if (reserva.Status != Domain.Enums.StatusReserva.Pendente) throw new InvalidOperationException("Reserva não está em estado pendente");
 
-            // Criar venda baseada na reserva
+            var apt = await _apartRepo.GetByIdAsync(reserva.ApartamentoId);
+
             var venda = new Venda
             {
+                Id = Guid.NewGuid(),
                 ClienteId = reserva.ClienteId,
                 ApartamentoId = reserva.ApartamentoId,
-                ValorPago = (await _apartRepo.GetByIdAsync(reserva.ApartamentoId))?.Valor ?? 0m
+                DataVenda = DateTime.UtcNow,
+                ValorPago = apt?.Valor ?? 0m
             };
 
-            await _vendaService.CreateAsync(venda);
-
-            reserva.Status = Domain.Enums.StatusReserva.Confirmada;
-            await _reservaRepo.UpdateAsync(reserva);
+            // Wrap the entire confirmation (venda + status updates) in a single transaction
+            var provider = _context.Database.ProviderName;
+            if (provider != "Microsoft.EntityFrameworkCore.InMemory")
+            {
+                using var trx = await _context.Database.BeginTransactionAsync();
+                try
+                {
+                    await _vendaRepo.AddAsync(venda);
+                    if (apt != null) { apt.Status = Domain.Enums.StatusApartamento.Vendido; await _apartRepo.UpdateAsync(apt); }
+                    reserva.Status = Domain.Enums.StatusReserva.Confirmada;
+                    await _reservaRepo.UpdateAsync(reserva);
+                    await trx.CommitAsync();
+                }
+                catch
+                {
+                    await trx.RollbackAsync();
+                    throw;
+                }
+            }
+            else
+            {
+                await _vendaRepo.AddAsync(venda);
+                if (apt != null) { apt.Status = Domain.Enums.StatusApartamento.Vendido; await _apartRepo.UpdateAsync(apt); }
+                reserva.Status = Domain.Enums.StatusReserva.Confirmada;
+                await _reservaRepo.UpdateAsync(reserva);
+            }
         }
 
         public async Task CancelAsync(Guid id)

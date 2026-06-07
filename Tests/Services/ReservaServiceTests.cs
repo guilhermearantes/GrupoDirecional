@@ -23,8 +23,7 @@ namespace Tests.Services
             var reservaRepo = new DesafioTecnico.Infraestructure.Repositories.ReservaRepository(context);
             var apartRepo = new DesafioTecnico.Infraestructure.Repositories.ApartamentoRepository(context);
             var vendaRepo = new DesafioTecnico.Infraestructure.Repositories.VendaRepository(context);
-            var vendaService = new DesafioTecnico.Infraestructure.Services.VendaService(context, vendaRepo, apartRepo);
-            var reservaService = new DesafioTecnico.Infraestructure.Services.ReservaService(reservaRepo, apartRepo, vendaService);
+            var reservaService = new DesafioTecnico.Infraestructure.Services.ReservaService(context, reservaRepo, apartRepo, vendaRepo);
 
             var reserva = new DesafioTecnico.Domain.Entities.Reserva
             {
@@ -58,8 +57,7 @@ namespace Tests.Services
             var reservaRepo = new DesafioTecnico.Infraestructure.Repositories.ReservaRepository(context);
             var apartRepo = new DesafioTecnico.Infraestructure.Repositories.ApartamentoRepository(context);
             var vendaRepo = new DesafioTecnico.Infraestructure.Repositories.VendaRepository(context);
-            var vendaService = new DesafioTecnico.Infraestructure.Services.VendaService(context, vendaRepo, apartRepo);
-            var reservaService = new DesafioTecnico.Infraestructure.Services.ReservaService(reservaRepo, apartRepo, vendaService);
+            var reservaService = new DesafioTecnico.Infraestructure.Services.ReservaService(context, reservaRepo, apartRepo, vendaRepo);
 
             var reserva = new DesafioTecnico.Domain.Entities.Reserva
             {
@@ -82,8 +80,7 @@ namespace Tests.Services
             var reservaRepo = new DesafioTecnico.Infraestructure.Repositories.ReservaRepository(context);
             var apartRepo = new DesafioTecnico.Infraestructure.Repositories.ApartamentoRepository(context);
             var vendaRepo = new DesafioTecnico.Infraestructure.Repositories.VendaRepository(context);
-            var vendaService = new DesafioTecnico.Infraestructure.Services.VendaService(context, vendaRepo, apartRepo);
-            var reservaService = new DesafioTecnico.Infraestructure.Services.ReservaService(reservaRepo, apartRepo, vendaService);
+            var reservaService = new DesafioTecnico.Infraestructure.Services.ReservaService(context, reservaRepo, apartRepo, vendaRepo);
 
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await reservaService.ConfirmAsync(Guid.NewGuid()));
         }
@@ -118,8 +115,7 @@ namespace Tests.Services
             var reservaRepo = new DesafioTecnico.Infraestructure.Repositories.ReservaRepository(context);
             var apartRepo = new DesafioTecnico.Infraestructure.Repositories.ApartamentoRepository(context);
             var vendaRepo = new DesafioTecnico.Infraestructure.Repositories.VendaRepository(context);
-            var vendaService = new DesafioTecnico.Infraestructure.Services.VendaService(context, vendaRepo, apartRepo);
-            var reservaService = new DesafioTecnico.Infraestructure.Services.ReservaService(reservaRepo, apartRepo, vendaService);
+            var reservaService = new DesafioTecnico.Infraestructure.Services.ReservaService(context, reservaRepo, apartRepo, vendaRepo);
 
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await reservaService.ConfirmAsync(reserva.Id));
         }
@@ -154,8 +150,7 @@ namespace Tests.Services
             var reservaRepo = new DesafioTecnico.Infraestructure.Repositories.ReservaRepository(context);
             var apartRepo = new DesafioTecnico.Infraestructure.Repositories.ApartamentoRepository(context);
             var vendaRepo = new DesafioTecnico.Infraestructure.Repositories.VendaRepository(context);
-            var vendaService = new DesafioTecnico.Infraestructure.Services.VendaService(context, vendaRepo, apartRepo);
-            var reservaService = new DesafioTecnico.Infraestructure.Services.ReservaService(reservaRepo, apartRepo, vendaService);
+            var reservaService = new DesafioTecnico.Infraestructure.Services.ReservaService(context, reservaRepo, apartRepo, vendaRepo);
 
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await reservaService.CancelAsync(reserva.Id));
         }
@@ -178,8 +173,7 @@ namespace Tests.Services
             var reservaRepo = new DesafioTecnico.Infraestructure.Repositories.ReservaRepository(context);
             var apartRepo = new DesafioTecnico.Infraestructure.Repositories.ApartamentoRepository(context);
             var vendaRepo = new DesafioTecnico.Infraestructure.Repositories.VendaRepository(context);
-            var vendaService = new DesafioTecnico.Infraestructure.Services.VendaService(context, vendaRepo, apartRepo);
-            var reservaService = new DesafioTecnico.Infraestructure.Services.ReservaService(reservaRepo, apartRepo, vendaService);
+            var reservaService = new DesafioTecnico.Infraestructure.Services.ReservaService(context, reservaRepo, apartRepo, vendaRepo);
 
             var reserva = new DesafioTecnico.Domain.Entities.Reserva
             {
@@ -219,8 +213,7 @@ namespace Tests.Services
             var reservaRepo = new DesafioTecnico.Infraestructure.Repositories.ReservaRepository(context);
             var apartRepo = new DesafioTecnico.Infraestructure.Repositories.ApartamentoRepository(context);
             var vendaRepo = new DesafioTecnico.Infraestructure.Repositories.VendaRepository(context);
-            var vendaService = new DesafioTecnico.Infraestructure.Services.VendaService(context, vendaRepo, apartRepo);
-            var reservaService = new DesafioTecnico.Infraestructure.Services.ReservaService(reservaRepo, apartRepo, vendaService);
+            var reservaService = new DesafioTecnico.Infraestructure.Services.ReservaService(context, reservaRepo, apartRepo, vendaRepo);
 
             var reserva = new DesafioTecnico.Domain.Entities.Reserva
             {

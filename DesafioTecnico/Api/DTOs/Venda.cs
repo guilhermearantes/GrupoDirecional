@@ -21,7 +21,9 @@ namespace DesafioTecnico.Api.DTOs
         public decimal ValorPago { get; set; }
     }
 
-    public class VendaUpdateDto : VendaCreateDto
+    public class VendaUpdateDto
     {
+        [Required]
+        public decimal ValorPago { get; set; }
     }
 }

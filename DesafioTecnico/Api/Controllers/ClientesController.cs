@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using DesafioTecnico.Infraestructure.Services.Interfaces;
 using DesafioTecnico.Api.DTOs;
@@ -40,7 +41,14 @@ namespace DesafioTecnico.Api.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var entity = _mapper.Map<Domain.Entities.Cliente>(dto);
-            await _service.CreateAsync(entity);
+            try
+            {
+                await _service.CreateAsync(entity);
+            }
+            catch (DbUpdateException)
+            {
+                return Conflict(new { error = "Email ou CPF já cadastrado." });
+            }
             return CreatedAtAction(nameof(Get), new { id = entity.Id }, _mapper.Map<ClienteReadDto>(entity));
         }
 
@@ -52,7 +60,14 @@ namespace DesafioTecnico.Api.Controllers
             if (existing == null) return NotFound();
             var toUpdate = _mapper.Map(dto, existing);
             toUpdate.Id = id;
-            await _service.UpdateAsync(toUpdate);
+            try
+            {
+                await _service.UpdateAsync(toUpdate);
+            }
+            catch (DbUpdateException)
+            {
+                return Conflict(new { error = "Email ou CPF já cadastrado." });
+            }
             return NoContent();
         }
 

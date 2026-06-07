@@ -23,14 +23,8 @@ namespace DesafioTecnico.Infraestructure.Services
             await _repository.AddAsync(cliente);
         }
 
-        public async Task UpdateAsync(Cliente cliente)
-        {
-            await _repository.UpdateAsync(cliente);
-        }
+        public Task UpdateAsync(Cliente cliente) => _repository.UpdateAsync(cliente);
 
-        public async Task DeleteAsync(Guid id)
-        {
-            await _repository.DeleteAsync(id);
-        }
+        public Task DeleteAsync(Guid id) => _repository.DeleteAsync(id);
     }
 }

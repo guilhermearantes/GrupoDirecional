@@ -25,6 +25,3 @@ jobs:
 
       - name: Run unit tests
         run: dotnet test --no-build --verbosity normal --filter "Category!=Integration"
-
-  integration-tests:
-    # integration-tests job moved to a separate workflow (integration.yml) that runs on demand (workflow_dispatch)
