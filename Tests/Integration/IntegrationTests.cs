@@ -18,17 +18,13 @@ namespace Tests.Integration
         private readonly WebApplicationFactory<DesafioTecnico.Program> _factory;
         private WebApplicationFactory<DesafioTecnico.Program>? _configuredFactory;
         private HttpClient _client = null!;
-        // Test skip flags are always available so integration tests can gracefully skip
-        // when a DB is not available (e.g. running from Test Explorer without docker-compose).
 #if TESTCONTAINERS
         private MsSqlTestcontainer? _container;
 #endif
         private bool _skipIntegration = false;
         private string? _skipReason;
 
-        // Configuration for test containers and connection. Read sensitive values from environment when available.
         private const string ContainerName = "desafio-test-sql";
-        // Read SA password only from environment variables; do NOT fall back to hardcoded secrets.
         private readonly string? SaPassword = Environment.GetEnvironmentVariable("TEST_DB_SA_PASSWORD")
             ?? Environment.GetEnvironmentVariable("SA_PASSWORD");
         private readonly int HostPort = int.TryParse(Environment.GetEnvironmentVariable("TEST_DB_PORT") ?? Environment.GetEnvironmentVariable("DB_PORT"), out var _hp) ? _hp : 14333;
@@ -45,9 +41,7 @@ namespace Tests.Integration
 
         public async Task InitializeAsync()
         {
-            // If TESTCONTAINERS is defined and package is available, use it. Otherwise the test assumes an external DB is provided by the developer (docker-compose up)
 #if !TESTCONTAINERS
-            // If SA password is not set via environment, skip integration tests when running from Test Explorer/CLI without docker-compose.
             if (string.IsNullOrEmpty(SaPassword))
             {
                 _skipIntegration = true;
@@ -57,7 +51,6 @@ namespace Tests.Integration
             }
 #endif
 #if TESTCONTAINERS
-            // Configure Testcontainers for SQL Server (Ryuk enabled by default for automatic cleanup)
             var testcontainersBuilder = new TestcontainersBuilder<MsSqlTestcontainer>()
                 .WithDatabase(new MsSqlTestcontainerConfiguration
                 {
@@ -77,12 +70,11 @@ namespace Tests.Integration
             }
             catch (Exception ex)
             {
-                // If Testcontainers cannot start (Docker endpoint problems), mark integration tests to be skipped and continue so the test will early-return.
                 _skipIntegration = true;
                 _skipReason = $"Testcontainers failed to start: {ex.Message}. Ensure Docker daemon TCP is available or run docker-compose and execute tests without TESTCONTAINERS.";
             }
 
-            // Wait for SQL Server master to accept connections (increase timeout to ~3 minutes)
+            // ~3 min timeout waiting for SQL Server master to accept connections
                 var masterConn = new SqlConnectionStringBuilder
                 {
                     DataSource = $"127.0.0.1,{HostPort}",
@@ -111,7 +103,6 @@ namespace Tests.Integration
 
             if (!readyMaster)
             {
-                // attempt to dump container logs to help debugging, mark skip and early-return
                 await DumpContainerLogsAsync();
                 _skipIntegration = true;
                 _skipReason = $"SQL Server master did not become ready in time. Check docker logs for the container '{ContainerName}'.";
@@ -119,7 +110,6 @@ namespace Tests.Integration
                 return;
             }
 
-            // Ensure the target database exists before configuring the factory
             try
             {
                 using var createConn = new SqlConnection(masterConn);
@@ -145,7 +135,6 @@ namespace Tests.Integration
                 ConnectTimeout = 30
             }.ConnectionString;
 #else
-            // When not using Testcontainers, read connection config from environment to avoid hardcoded secrets.
             var envSa = Environment.GetEnvironmentVariable("TEST_DB_SA_PASSWORD") ?? Environment.GetEnvironmentVariable("SA_PASSWORD") ?? "Your_password123";
             var envPortStr = Environment.GetEnvironmentVariable("TEST_DB_PORT") ?? Environment.GetEnvironmentVariable("DB_PORT");
             var envPort = 14333;
@@ -162,10 +151,9 @@ namespace Tests.Integration
             }.ConnectionString;
 #endif
 
-            // Setup factory and replace DbContext to point to the container
             _configuredFactory = _factory.WithWebHostBuilder(builder =>
             {
-                // use Development environment so the app registers SqlServer provider (we'll replace the DbContext registration below)
+                // Development so SQLite branch doesn't activate; we replace the DbContext below anyway.
                 builder.UseSetting("environment", "Development");
                 builder.ConfigureServices(services =>
                 {
@@ -174,8 +162,6 @@ namespace Tests.Integration
 
                     services.AddDbContext<DesafioTecnico.Infrastructure.Data.AppDbContext>(options => options.UseSqlServer(conn));
 
-                    // Add test authentication handler
-                    // Provide an adapter so AuthenticationHandler can still consume ISystemClock while using modern TimeProvider.
                     services.AddSingleton<Microsoft.AspNetCore.Authentication.ISystemClock>(_ => new Tests.Authentication.TimeProviderSystemClock(TimeProvider.System));
                     services.AddAuthentication("Test").AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, Tests.Authentication.TestAuthHandler>("Test", options => { });
                 });
@@ -202,7 +188,6 @@ namespace Tests.Integration
                     attempts++;
                     if (attempts >= maxAttempts)
                     {
-                        // dump logs and skip the integration test to avoid breaking local runs
 #if TESTCONTAINERS
                         await DumpContainerLogsAsync();
 #endif
@@ -213,8 +198,6 @@ namespace Tests.Integration
                 }
             }
 
-            // Verify we can open a connection and perform a simple command. If authentication/permissions fail,
-            // mark integration tests to be skipped so they don't fail when run from Test Explorer without proper env.
             try
             {
                 using var verifyConn = new SqlConnection(conn);
@@ -269,7 +252,6 @@ namespace Tests.Integration
                 Console.WriteLine(skipReason ?? "Integration tests skipped due to Testcontainers startup failure.");
                 return;
             }
-            // arrange: create admin user via db
             try
             {
                 using (var scope = _configuredFactory!.Services.CreateScope())
@@ -283,8 +265,6 @@ namespace Tests.Integration
             }
             catch (Exception ex)
             {
-                // Any error while seeding test data may be caused by DB authentication/availability issues.
-                // Skip the integration test to avoid failing local runs when infrastructure isn't configured.
                 Console.WriteLine($"Skipping integration test during seed step: {ex.GetType().Name}: {ex.Message}");
                 return;
             }

@@ -1,11 +1,8 @@
-using System;
 using Microsoft.AspNetCore.Authentication;
 
 namespace Tests.Authentication
 {
-    // Adapter to bridge System.TimeProvider to ISystemClock expected by older APIs.
-    // This is a small, well-tested adapter keeping production code unchanged while
-    // using the modern TimeProvider in DI.
+    // ISystemClock is required by the legacy auth stack; bridges it to the modern TimeProvider.
     internal sealed class TimeProviderSystemClock : ISystemClock
     {
         private readonly TimeProvider _timeProvider;

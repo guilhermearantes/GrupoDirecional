@@ -17,7 +17,6 @@ namespace DesafioTecnico.Infrastructure.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            // Aplica todas as configurações que implementem IEntityTypeConfiguration<T> no assembly.
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
         }
     }

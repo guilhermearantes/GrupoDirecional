@@ -65,9 +65,8 @@ namespace Tests.Services
             var service = new DesafioTecnico.Infrastructure.Services.ApartamentoService(repo);
 
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
-            // do not add to context
+            // intentionally not added to context
 
-            // ensure exception is thrown when trying to update an entity that does not exist in InMemory provider
             await Assert.ThrowsAsync<Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException>(async () => await service.UpdateAsync(apt));
         }
     }

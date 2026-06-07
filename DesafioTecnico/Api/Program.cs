@@ -7,8 +7,6 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<DesafioTecnico.Api.Filters.ValidateRouteGuidsFilter>();
@@ -26,19 +24,15 @@ else
 {
     builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connection));
 }
-// Repositorios e services
 builder.Services.AddScoped<DesafioTecnico.Infrastructure.Repositories.Interfaces.IClienteRepository, DesafioTecnico.Infrastructure.Repositories.ClienteRepository>();
 builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IClienteService, DesafioTecnico.Infrastructure.Services.ClienteService>();
 builder.Services.AddScoped<DesafioTecnico.Infrastructure.Repositories.Interfaces.IApartamentoRepository, DesafioTecnico.Infrastructure.Repositories.ApartamentoRepository>();
 builder.Services.AddScoped<DesafioTecnico.Infrastructure.Repositories.Interfaces.IReservaRepository, DesafioTecnico.Infrastructure.Repositories.ReservaRepository>();
 builder.Services.AddScoped<DesafioTecnico.Infrastructure.Repositories.Interfaces.IVendaRepository, DesafioTecnico.Infrastructure.Repositories.VendaRepository>();
 builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IReservaService, DesafioTecnico.Infrastructure.Services.ReservaService>();
-// Auth and token generator
 builder.Services.AddScoped<DesafioTecnico.Infrastructure.Security.JwtTokenGenerator>();
 builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IAuthService, DesafioTecnico.Infrastructure.Services.AuthService>();
-// Venda service
 builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IVendaService, DesafioTecnico.Infrastructure.Services.VendaService>();
-// Apartamento service
 builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IApartamentoService, DesafioTecnico.Infrastructure.Services.ApartamentoService>();
 
 // Rate limiting — máx 5 tentativas de login por minuto por IP
@@ -54,7 +48,6 @@ builder.Services.AddRateLimiter(options =>
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
-// JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"];
 if (!string.IsNullOrEmpty(jwtKey))
 {
@@ -79,7 +72,6 @@ if (!string.IsNullOrEmpty(jwtKey))
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
