@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using DesafioTecnico.Infraestructure.Data;
+using DesafioTecnico.Infrastructure.Data;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,8 +11,8 @@ builder.Services.AddAutoMapper(typeof(DesafioTecnico.Api.Mapping.AutoMapperProfi
 builder.Services.AddOpenApi();
 
 var connection = builder.Configuration.GetConnectionString("DefaultConnection");
-// Allow using Sqlite for integration tests environment
-if (builder.Environment.IsEnvironment("IntegrationTests"))
+// SQLite for local dev and integration tests; SQL Server for staging/prod (docker).
+if (builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("IntegrationTests"))
 {
     builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connection));
 }
@@ -21,19 +21,19 @@ else
     builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connection));
 }
 // Repositorios e services
-builder.Services.AddScoped<DesafioTecnico.Infraestructure.Repositories.Interfaces.IClienteRepository, DesafioTecnico.Infraestructure.Repositories.ClienteRepository>();
-builder.Services.AddScoped<DesafioTecnico.Infraestructure.Services.Interfaces.IClienteService, DesafioTecnico.Infraestructure.Services.ClienteService>();
-builder.Services.AddScoped<DesafioTecnico.Infraestructure.Repositories.Interfaces.IApartamentoRepository, DesafioTecnico.Infraestructure.Repositories.ApartamentoRepository>();
-builder.Services.AddScoped<DesafioTecnico.Infraestructure.Repositories.Interfaces.IReservaRepository, DesafioTecnico.Infraestructure.Repositories.ReservaRepository>();
-builder.Services.AddScoped<DesafioTecnico.Infraestructure.Repositories.Interfaces.IVendaRepository, DesafioTecnico.Infraestructure.Repositories.VendaRepository>();
-builder.Services.AddScoped<DesafioTecnico.Infraestructure.Services.Interfaces.IReservaService, DesafioTecnico.Infraestructure.Services.ReservaService>();
+builder.Services.AddScoped<DesafioTecnico.Infrastructure.Repositories.Interfaces.IClienteRepository, DesafioTecnico.Infrastructure.Repositories.ClienteRepository>();
+builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IClienteService, DesafioTecnico.Infrastructure.Services.ClienteService>();
+builder.Services.AddScoped<DesafioTecnico.Infrastructure.Repositories.Interfaces.IApartamentoRepository, DesafioTecnico.Infrastructure.Repositories.ApartamentoRepository>();
+builder.Services.AddScoped<DesafioTecnico.Infrastructure.Repositories.Interfaces.IReservaRepository, DesafioTecnico.Infrastructure.Repositories.ReservaRepository>();
+builder.Services.AddScoped<DesafioTecnico.Infrastructure.Repositories.Interfaces.IVendaRepository, DesafioTecnico.Infrastructure.Repositories.VendaRepository>();
+builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IReservaService, DesafioTecnico.Infrastructure.Services.ReservaService>();
 // Auth and token generator
-builder.Services.AddScoped<DesafioTecnico.Infraestructure.Security.JwtTokenGenerator>();
-builder.Services.AddScoped<DesafioTecnico.Infraestructure.Services.Interfaces.IAuthService, DesafioTecnico.Infraestructure.Services.AuthService>();
+builder.Services.AddScoped<DesafioTecnico.Infrastructure.Security.JwtTokenGenerator>();
+builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IAuthService, DesafioTecnico.Infrastructure.Services.AuthService>();
 // Venda service
-builder.Services.AddScoped<DesafioTecnico.Infraestructure.Services.Interfaces.IVendaService, DesafioTecnico.Infraestructure.Services.VendaService>();
+builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IVendaService, DesafioTecnico.Infrastructure.Services.VendaService>();
 // Apartamento service
-builder.Services.AddScoped<DesafioTecnico.Infraestructure.Services.Interfaces.IApartamentoService, DesafioTecnico.Infraestructure.Services.ApartamentoService>();
+builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IApartamentoService, DesafioTecnico.Infrastructure.Services.ApartamentoService>();
 
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"];
@@ -75,6 +75,8 @@ if (!app.Environment.IsEnvironment("IntegrationTests"))
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     SeedData.EnsureSeedData(db);
 }
+
+app.UseMiddleware<DesafioTecnico.Api.Middleware.ExceptionMiddleware>();
 
 app.UseHttpsRedirection();
 

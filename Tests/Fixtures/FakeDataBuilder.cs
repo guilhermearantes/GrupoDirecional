@@ -10,12 +10,15 @@ namespace Tests.Fixtures
     {
         public static DesafioTecnico.Domain.Entities.Cliente CreateCliente()
         {
+            var id = Guid.NewGuid();
+            var digits = id.ToString("N")[..9];
+            var cpf = $"{digits[..3]}.{digits[3..6]}.{digits[6..9]}-{digits[..2]}";
             return new DesafioTecnico.Domain.Entities.Cliente
             {
-                Id = Guid.NewGuid(),
+                Id = id,
                 Nome = "Cliente Teste",
-                Email = "teste@exemplo.com",
-                Cpf = "000.000.000-00",
+                Email = $"teste-{id:N}@exemplo.com",
+                Cpf = cpf,
                 DataNascimento = DateTime.UtcNow.AddYears(-30)
             };
         }

@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
-using DesafioTecnico.Infraestructure.Services.Interfaces;
+using DesafioTecnico.Infrastructure.Services.Interfaces;
 using DesafioTecnico.Api.DTOs;
 
 namespace DesafioTecnico.Api.Controllers
@@ -64,13 +64,6 @@ namespace DesafioTecnico.Api.Controllers
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
-        public async Task<ActionResult> Delete(Guid id)
-        {
-            var existing = await _vendaService.GetByIdAsync(id);
-            if (existing == null) return NotFound();
-            await _vendaService.DeleteAsync(id);
-            return NoContent();
-        }
+        // DELETE not exposed: sales are immutable business records.
     }
 }

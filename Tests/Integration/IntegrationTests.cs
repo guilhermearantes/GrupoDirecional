@@ -169,10 +169,10 @@ namespace Tests.Integration
                 builder.UseSetting("environment", "Development");
                 builder.ConfigureServices(services =>
                 {
-                    var descriptors = services.Where(d => d.ServiceType == typeof(DbContextOptions<DesafioTecnico.Infraestructure.Data.AppDbContext>) || d.ServiceType == typeof(DesafioTecnico.Infraestructure.Data.AppDbContext)).ToList();
+                    var descriptors = services.Where(d => d.ServiceType == typeof(DbContextOptions<DesafioTecnico.Infrastructure.Data.AppDbContext>) || d.ServiceType == typeof(DesafioTecnico.Infrastructure.Data.AppDbContext)).ToList();
                     foreach (var d in descriptors) services.Remove(d);
 
-                    services.AddDbContext<DesafioTecnico.Infraestructure.Data.AppDbContext>(options => options.UseSqlServer(conn));
+                    services.AddDbContext<DesafioTecnico.Infrastructure.Data.AppDbContext>(options => options.UseSqlServer(conn));
 
                     // Add test authentication handler
                     // Provide an adapter so AuthenticationHandler can still consume ISystemClock while using modern TimeProvider.
@@ -184,7 +184,7 @@ namespace Tests.Integration
             _client = _configuredFactory.CreateClient();
 
             using var scope = _configuredFactory.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<DesafioTecnico.Infraestructure.Data.AppDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<DesafioTecnico.Infrastructure.Data.AppDbContext>();
 
             // retry opening connection/migrating for a short while to allow SQL Server to finish initialization
             var migrated = false;
@@ -274,7 +274,7 @@ namespace Tests.Integration
             {
                 using (var scope = _configuredFactory!.Services.CreateScope())
                 {
-                    var db = scope.ServiceProvider.GetRequiredService<DesafioTecnico.Infraestructure.Data.AppDbContext>();
+                    var db = scope.ServiceProvider.GetRequiredService<DesafioTecnico.Infrastructure.Data.AppDbContext>();
                     db.Usuarios.Add(new DesafioTecnico.Domain.Entities.Usuario { Id = Guid.NewGuid(), Username = "admin", PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"), Role = "Admin" });
                     var apt = Fixtures.FakeDataBuilder.CreateApartamento();
                     db.Apartamentos.Add(apt);
@@ -319,7 +319,7 @@ namespace Tests.Integration
             // verify in db
             using (var scope = _configuredFactory.Services.CreateScope())
             {
-                var db = scope.ServiceProvider.GetRequiredService<DesafioTecnico.Infraestructure.Data.AppDbContext>();
+                var db = scope.ServiceProvider.GetRequiredService<DesafioTecnico.Infrastructure.Data.AppDbContext>();
                 var apt = await db.Apartamentos.FindAsync(aptId);
                 Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Vendido, apt.Status);
 

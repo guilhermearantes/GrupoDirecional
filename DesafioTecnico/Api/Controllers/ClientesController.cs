@@ -1,8 +1,8 @@
-Ôªøusing Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
-using DesafioTecnico.Infraestructure.Services.Interfaces;
+using DesafioTecnico.Infrastructure.Services.Interfaces;
 using DesafioTecnico.Api.DTOs;
 
 namespace DesafioTecnico.Api.Controllers
@@ -47,7 +47,7 @@ namespace DesafioTecnico.Api.Controllers
             }
             catch (DbUpdateException)
             {
-                return Conflict(new { error = "Email ou CPF j√° cadastrado." });
+                return Conflict(new { error = "Email ou CPF j· cadastrado." });
             }
             return CreatedAtAction(nameof(Get), new { id = entity.Id }, _mapper.Map<ClienteReadDto>(entity));
         }
@@ -66,7 +66,7 @@ namespace DesafioTecnico.Api.Controllers
             }
             catch (DbUpdateException)
             {
-                return Conflict(new { error = "Email ou CPF j√° cadastrado." });
+                return Conflict(new { error = "Email ou CPF j· cadastrado." });
             }
             return NoContent();
         }

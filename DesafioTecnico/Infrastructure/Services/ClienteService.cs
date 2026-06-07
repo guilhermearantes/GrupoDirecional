@@ -1,0 +1,30 @@
+using DesafioTecnico.Domain.Entities;
+using DesafioTecnico.Infrastructure.Repositories.Interfaces;
+using DesafioTecnico.Infrastructure.Services.Interfaces;
+
+namespace DesafioTecnico.Infrastructure.Services
+{
+    public class ClienteService : IClienteService
+    {
+        private readonly IClienteRepository _repository;
+
+        public ClienteService(IClienteRepository repository)
+        {
+            _repository = repository;
+        }
+
+        public Task<IEnumerable<Cliente>> GetAllAsync() => _repository.GetAllAsync();
+
+        public Task<Cliente?> GetByIdAsync(Guid id) => _repository.GetByIdAsync(id);
+
+        public async Task CreateAsync(Cliente cliente)
+        {
+            cliente.Id = Guid.NewGuid();
+            await _repository.AddAsync(cliente);
+        }
+
+        public Task UpdateAsync(Cliente cliente) => _repository.UpdateAsync(cliente);
+
+        public Task DeleteAsync(Guid id) => _repository.DeleteAsync(id);
+    }
+}

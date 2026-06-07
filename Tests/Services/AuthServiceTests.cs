@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using DesafioTecnico.Infraestructure.Data;
+using DesafioTecnico.Infrastructure.Data;
 
 namespace Tests.Services
 {
@@ -36,8 +36,8 @@ namespace Tests.Services
 
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(inMemorySettings).Build();
 
-            var tokenGenerator = new DesafioTecnico.Infraestructure.Security.JwtTokenGenerator(configuration);
-            var authService = new DesafioTecnico.Infraestructure.Services.AuthService(context, tokenGenerator);
+            var tokenGenerator = new DesafioTecnico.Infrastructure.Security.JwtTokenGenerator(configuration);
+            var authService = new DesafioTecnico.Infrastructure.Services.AuthService(context, tokenGenerator);
 
             var result = await authService.AuthenticateAsync("admin", "secret");
 
@@ -75,8 +75,8 @@ namespace Tests.Services
 
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(inMemorySettings).Build();
 
-            var tokenGenerator = new DesafioTecnico.Infraestructure.Security.JwtTokenGenerator(configuration);
-            var authService = new DesafioTecnico.Infraestructure.Services.AuthService(context, tokenGenerator);
+            var tokenGenerator = new DesafioTecnico.Infrastructure.Security.JwtTokenGenerator(configuration);
+            var authService = new DesafioTecnico.Infrastructure.Services.AuthService(context, tokenGenerator);
 
             var result = await authService.AuthenticateAsync("admin", "wrongpassword");
             Assert.Null(result);
@@ -101,8 +101,8 @@ namespace Tests.Services
 
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(inMemorySettings).Build();
 
-            var tokenGenerator = new DesafioTecnico.Infraestructure.Security.JwtTokenGenerator(configuration);
-            var authService = new DesafioTecnico.Infraestructure.Services.AuthService(context, tokenGenerator);
+            var tokenGenerator = new DesafioTecnico.Infrastructure.Security.JwtTokenGenerator(configuration);
+            var authService = new DesafioTecnico.Infrastructure.Services.AuthService(context, tokenGenerator);
 
             var result = await authService.AuthenticateAsync("nonexistent", "secret");
             Assert.Null(result);

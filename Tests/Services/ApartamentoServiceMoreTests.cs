@@ -7,18 +7,18 @@ namespace Tests.Services
         [Fact]
         public async Task UpdateApartamento_PersistsChanges()
         {
-            var options = new DbContextOptionsBuilder<DesafioTecnico.Infraestructure.Data.AppDbContext>()
+            var options = new DbContextOptionsBuilder<DesafioTecnico.Infrastructure.Data.AppDbContext>()
                 .UseInMemoryDatabase(databaseName: "TestDb_UpdateApartamento")
                 .Options;
 
-            using var context = new DesafioTecnico.Infraestructure.Data.AppDbContext(options);
+            using var context = new DesafioTecnico.Infrastructure.Data.AppDbContext(options);
 
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
             context.Apartamentos.Add(apt);
             context.SaveChanges();
 
-            var repo = new DesafioTecnico.Infraestructure.Repositories.ApartamentoRepository(context);
-            var service = new DesafioTecnico.Infraestructure.Services.ApartamentoService(repo);
+            var repo = new DesafioTecnico.Infrastructure.Repositories.ApartamentoRepository(context);
+            var service = new DesafioTecnico.Infrastructure.Services.ApartamentoService(repo);
 
             apt.Bloco = "B2";
             apt.Valor = 999999m;
@@ -33,18 +33,18 @@ namespace Tests.Services
         [Fact]
         public async Task DeleteApartamento_RemovesEntity()
         {
-            var options = new DbContextOptionsBuilder<DesafioTecnico.Infraestructure.Data.AppDbContext>()
+            var options = new DbContextOptionsBuilder<DesafioTecnico.Infrastructure.Data.AppDbContext>()
                 .UseInMemoryDatabase(databaseName: "TestDb_DeleteApartamento")
                 .Options;
 
-            using var context = new DesafioTecnico.Infraestructure.Data.AppDbContext(options);
+            using var context = new DesafioTecnico.Infrastructure.Data.AppDbContext(options);
 
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
             context.Apartamentos.Add(apt);
             context.SaveChanges();
 
-            var repo = new DesafioTecnico.Infraestructure.Repositories.ApartamentoRepository(context);
-            var service = new DesafioTecnico.Infraestructure.Services.ApartamentoService(repo);
+            var repo = new DesafioTecnico.Infrastructure.Repositories.ApartamentoRepository(context);
+            var service = new DesafioTecnico.Infrastructure.Services.ApartamentoService(repo);
 
             await service.DeleteAsync(apt.Id);
 
@@ -55,14 +55,14 @@ namespace Tests.Services
         [Fact]
         public async Task Update_Nonexistent_ThrowsOrNoop()
         {
-            var options = new DbContextOptionsBuilder<DesafioTecnico.Infraestructure.Data.AppDbContext>()
+            var options = new DbContextOptionsBuilder<DesafioTecnico.Infrastructure.Data.AppDbContext>()
                 .UseInMemoryDatabase(databaseName: "TestDb_UpdateNonexistent")
                 .Options;
 
-            using var context = new DesafioTecnico.Infraestructure.Data.AppDbContext(options);
+            using var context = new DesafioTecnico.Infrastructure.Data.AppDbContext(options);
 
-            var repo = new DesafioTecnico.Infraestructure.Repositories.ApartamentoRepository(context);
-            var service = new DesafioTecnico.Infraestructure.Services.ApartamentoService(repo);
+            var repo = new DesafioTecnico.Infrastructure.Repositories.ApartamentoRepository(context);
+            var service = new DesafioTecnico.Infrastructure.Services.ApartamentoService(repo);
 
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
             // do not add to context

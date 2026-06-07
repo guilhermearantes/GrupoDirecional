@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using DesafioTecnico.Api.DTOs;
 
@@ -9,9 +9,9 @@ namespace DesafioTecnico.Api.Controllers
     [AllowAnonymous]
     public class AuthController : ControllerBase
     {
-        private readonly Infraestructure.Services.Interfaces.IAuthService _authService;
+        private readonly Infrastructure.Services.Interfaces.IAuthService _authService;
 
-        public AuthController(Infraestructure.Services.Interfaces.IAuthService authService)
+        public AuthController(Infrastructure.Services.Interfaces.IAuthService authService)
         {
             _authService = authService;
         }
