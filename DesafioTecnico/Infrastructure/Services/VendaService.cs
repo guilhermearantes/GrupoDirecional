@@ -2,6 +2,7 @@ using DesafioTecnico.Domain.Entities;
 using DesafioTecnico.Infrastructure.Data;
 using DesafioTecnico.Infrastructure.Repositories.Interfaces;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace DesafioTecnico.Infrastructure.Services
 {
@@ -10,12 +11,14 @@ namespace DesafioTecnico.Infrastructure.Services
         private readonly AppDbContext _context;
         private readonly IVendaRepository _vendaRepo;
         private readonly IApartamentoRepository _apartRepo;
+        private readonly ILogger<VendaService> _logger;
 
-        public VendaService(AppDbContext context, IVendaRepository vendaRepo, IApartamentoRepository apartRepo)
+        public VendaService(AppDbContext context, IVendaRepository vendaRepo, IApartamentoRepository apartRepo, ILogger<VendaService> logger)
         {
             _context = context;
             _vendaRepo = vendaRepo;
             _apartRepo = apartRepo;
+            _logger = logger;
         }
 
         public Task<IEnumerable<Venda>> GetAllAsync(CancellationToken ct = default)
@@ -43,6 +46,7 @@ namespace DesafioTecnico.Infrastructure.Services
                     await _vendaRepo.AddAsync(venda, ct);
                     await _apartRepo.UpdateAsync(apt, ct);
                     await trx.CommitAsync(ct);
+                    _logger.LogInformation("Venda {VendaId} criada para apartamento {ApartamentoId}", venda.Id, venda.ApartamentoId);
                     return venda;
                 }
                 catch
@@ -55,6 +59,7 @@ namespace DesafioTecnico.Infrastructure.Services
             {
                 await _vendaRepo.AddAsync(venda, ct);
                 await _apartRepo.UpdateAsync(apt, ct);
+                _logger.LogInformation("Venda {VendaId} criada para apartamento {ApartamentoId}", venda.Id, venda.ApartamentoId);
                 return venda;
             }
         }

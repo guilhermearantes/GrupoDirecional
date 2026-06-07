@@ -303,7 +303,7 @@ namespace Tests.Integration
             var aptsResp = await _client.GetAsync("/api/apartamentos");
             aptsResp.EnsureSuccessStatusCode();
             var aptsJson = JsonDocument.Parse(await aptsResp.Content.ReadAsStringAsync());
-            var aptId = aptsJson.RootElement[0].GetProperty("id").GetGuid();
+            var aptId = aptsJson.RootElement.GetProperty("items")[0].GetProperty("id").GetGuid();
 
             // 4. create reserva
             var reservaReq = new { ClienteId = clienteId, ApartamentoId = aptId };

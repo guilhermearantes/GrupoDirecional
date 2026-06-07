@@ -21,7 +21,7 @@ namespace Tests.Services
 
             var vendaRepo = new DesafioTecnico.Infrastructure.Repositories.VendaRepository(context);
             var apartRepo = new DesafioTecnico.Infrastructure.Repositories.ApartamentoRepository(context);
-            var vendaService = new DesafioTecnico.Infrastructure.Services.VendaService(context, vendaRepo, apartRepo);
+            var vendaService = new DesafioTecnico.Infrastructure.Services.VendaService(context, vendaRepo, apartRepo, Microsoft.Extensions.Logging.Abstractions.NullLogger<DesafioTecnico.Infrastructure.Services.VendaService>.Instance);
 
             var venda = Fixtures.FakeDataBuilder.CreateVenda(cliente.Id, apt.Id);
 
@@ -52,7 +52,7 @@ namespace Tests.Services
 
             var vendaRepo = new DesafioTecnico.Infrastructure.Repositories.VendaRepository(context);
             var apartRepo = new DesafioTecnico.Infrastructure.Repositories.ApartamentoRepository(context);
-            var vendaService = new DesafioTecnico.Infrastructure.Services.VendaService(context, vendaRepo, apartRepo);
+            var vendaService = new DesafioTecnico.Infrastructure.Services.VendaService(context, vendaRepo, apartRepo, Microsoft.Extensions.Logging.Abstractions.NullLogger<DesafioTecnico.Infrastructure.Services.VendaService>.Instance);
 
             var venda = Fixtures.FakeDataBuilder.CreateVenda(cliente.Id, apt.Id);
 

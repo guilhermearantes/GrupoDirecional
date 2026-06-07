@@ -79,13 +79,10 @@ namespace DesafioTecnico.Api.Controllers
             return NoContent();
         }
 
-        // O endpoint abaixo atende ao requisito "excluir vendas" do desafio técnico.
-        // Em produção, deletar uma venda não é recomendado: vendas são registros contábeis
-        // e sua remoção quebra o histórico financeiro e de auditoria. A boa prática é
-        // adicionar um campo "Cancelada/Estornada" e manter o registro.
-        // Para habilitar, descomente o bloco abaixo.
-
-        /*
+        // Nota: em produção, deletar uma venda não é recomendado — vendas são registros
+        // contábeis e sua remoção quebra o histórico financeiro e de auditoria. A boa
+        // prática é adicionar um campo "Cancelada/Estornada" e manter o registro.
+        // Mantido aqui para atender ao requisito do desafio técnico.
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -96,6 +93,5 @@ namespace DesafioTecnico.Api.Controllers
             await _vendaService.DeleteAsync(id, ct);
             return NoContent();
         }
-        */
     }
 }
