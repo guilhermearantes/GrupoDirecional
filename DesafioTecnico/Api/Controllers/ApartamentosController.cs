@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using AutoMapper;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
 using DesafioTecnico.Api.DTOs;
