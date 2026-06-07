@@ -6,6 +6,9 @@ using DesafioTecnico.Api.DTOs;
 
 namespace DesafioTecnico.Api.Controllers
 {
+    /// <summary>
+    /// Gerencia operações relacionadas às vendas de apartamentos.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]

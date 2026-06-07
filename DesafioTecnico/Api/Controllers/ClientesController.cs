@@ -7,6 +7,9 @@ using DesafioTecnico.Api.DTOs;
 
 namespace DesafioTecnico.Api.Controllers
 {
+    /// <summary>
+    /// Gerencia operações relacionadas aos clientes.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]

@@ -11,6 +11,9 @@ namespace DesafioTecnico.Domain.Entities
         public Cliente? Cliente { get; set; }
         public Apartamento? Apartamento { get; set; }
 
+        /// <summary>
+        /// Inicializa a reserva com novo Id, data atual e status Pendente.
+        /// </summary>
         public void Iniciar()
         {
             Id = Guid.NewGuid();
@@ -18,6 +21,12 @@ namespace DesafioTecnico.Domain.Entities
             Status = Enums.StatusReserva.Pendente;
         }
 
+        /// <summary>
+        /// Confirma a reserva, avançando o status de Pendente para Confirmada.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// Lançada quando a reserva não está no estado Pendente.
+        /// </exception>
         public void Confirmar()
         {
             if (Status != Enums.StatusReserva.Pendente)
@@ -25,6 +34,12 @@ namespace DesafioTecnico.Domain.Entities
             Status = Enums.StatusReserva.Confirmada;
         }
 
+        /// <summary>
+        /// Cancela a reserva, alterando o status de Pendente para Cancelada.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// Lançada quando a reserva não está no estado Pendente.
+        /// </exception>
         public void Cancelar()
         {
             if (Status != Enums.StatusReserva.Pendente)

@@ -6,6 +6,9 @@ using DesafioTecnico.Api.DTOs;
 
 namespace DesafioTecnico.Api.Controllers
 {
+    /// <summary>
+    /// Gerencia o ciclo de vida de reservas: criação, confirmação, cancelamento e exclusão.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
@@ -55,6 +58,9 @@ namespace DesafioTecnico.Api.Controllers
             return CreatedAtAction(nameof(Get), new { id = entity.Id }, _mapper.Map<ReservaReadDto>(entity));
         }
 
+        /// <summary>
+        /// Confirma uma reserva pendente, gera a venda correspondente e marca o apartamento como Vendido.
+        /// </summary>
         [HttpPost("{id}/confirm")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -72,6 +78,9 @@ namespace DesafioTecnico.Api.Controllers
             }
         }
 
+        /// <summary>
+        /// Cancela uma reserva pendente e devolve o apartamento ao status Disponível.
+        /// </summary>
         [HttpPost("{id}/cancel")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

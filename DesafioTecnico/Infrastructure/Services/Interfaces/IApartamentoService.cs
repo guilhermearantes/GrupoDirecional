@@ -2,6 +2,9 @@ using DesafioTecnico.Domain.Entities;
 
 namespace DesafioTecnico.Infrastructure.Services.Interfaces
 {
+    /// <summary>
+    /// Define operações de gerenciamento de apartamentos.
+    /// </summary>
     public interface IApartamentoService
     {
         Task<IEnumerable<Apartamento>> GetAllAsync(CancellationToken ct = default);

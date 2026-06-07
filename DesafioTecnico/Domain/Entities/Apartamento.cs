@@ -13,6 +13,12 @@ namespace DesafioTecnico.Domain.Entities
         public ICollection<Reserva> Reservas { get; set; } = new List<Reserva>();
         public ICollection<Venda> Vendas { get; set; } = new List<Venda>();
 
+        /// <summary>
+        /// Altera o status para Reservado.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// Lançada quando o apartamento não está Disponível.
+        /// </exception>
         public void Reservar()
         {
             if (Status != Enums.StatusApartamento.Disponivel)
@@ -20,6 +26,12 @@ namespace DesafioTecnico.Domain.Entities
             Status = Enums.StatusApartamento.Reservado;
         }
 
+        /// <summary>
+        /// Altera o status para Vendido a partir de uma reserva confirmada.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// Lançada quando o apartamento não está Reservado.
+        /// </exception>
         public void Vender()
         {
             if (Status != Enums.StatusApartamento.Reservado)
@@ -27,7 +39,12 @@ namespace DesafioTecnico.Domain.Entities
             Status = Enums.StatusApartamento.Vendido;
         }
 
-        // Venda direta (sem reserva prévia) — só permitida quando Disponivel.
+        /// <summary>
+        /// Altera o status para Vendido sem reserva prévia (venda direta).
+        /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// Lançada quando o apartamento não está Disponível.
+        /// </exception>
         public void VenderDiretamente()
         {
             if (Status != Enums.StatusApartamento.Disponivel)
@@ -35,6 +52,12 @@ namespace DesafioTecnico.Domain.Entities
             Status = Enums.StatusApartamento.Vendido;
         }
 
+        /// <summary>
+        /// Devolve o apartamento ao status Disponível após cancelamento de reserva.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// Lançada quando o apartamento não está Reservado.
+        /// </exception>
         public void Liberar()
         {
             if (Status != Enums.StatusApartamento.Reservado)

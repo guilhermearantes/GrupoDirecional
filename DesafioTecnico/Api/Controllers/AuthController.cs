@@ -5,6 +5,9 @@ using DesafioTecnico.Api.DTOs;
 
 namespace DesafioTecnico.Api.Controllers
 {
+    /// <summary>
+    /// Gerencia autenticação de usuários e emissão de tokens JWT.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [AllowAnonymous]
