@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using AutoMapper;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
 using DesafioTecnico.Api.DTOs;
@@ -9,6 +10,7 @@ namespace DesafioTecnico.Api.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public class ApartamentosController : ControllerBase
     {
         private readonly IApartamentoService _service;
@@ -21,18 +23,24 @@ namespace DesafioTecnico.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ApartamentoReadDto>>> Get([FromQuery] string? status = null)
+        [ProducesResponseType(typeof(PagedResult<ApartamentoReadDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PagedResult<ApartamentoReadDto>>> Get(
+            [FromQuery] string? status = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
         {
-            var items = await _service.GetAllAsync();
-            if (!string.IsNullOrEmpty(status) &&
-                Enum.TryParse<DesafioTecnico.Domain.Enums.StatusApartamento>(status, ignoreCase: true, out var statusEnum))
-            {
-                items = items.Where(a => a.Status == statusEnum);
-            }
-            return Ok(_mapper.Map<IEnumerable<ApartamentoReadDto>>(items));
+            var all = await _service.GetAllAsync();
+            var filtered = string.IsNullOrEmpty(status) || !Enum.TryParse<DesafioTecnico.Domain.Enums.StatusApartamento>(status, ignoreCase: true, out var statusEnum)
+                ? all
+                : all.Where(a => a.Status == statusEnum);
+            var list = filtered.ToList();
+            var items = list.Skip((page - 1) * pageSize).Take(pageSize);
+            return Ok(new PagedResult<ApartamentoReadDto>(_mapper.Map<IEnumerable<ApartamentoReadDto>>(items), page, pageSize, list.Count));
         }
 
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(ApartamentoReadDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ApartamentoReadDto>> Get(Guid id)
         {
             var item = await _service.GetByIdAsync(id);
@@ -41,6 +49,8 @@ namespace DesafioTecnico.Api.Controllers
         }
 
         [HttpPost]
+        [ProducesResponseType(typeof(ApartamentoReadDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> Post([FromBody] ApartamentoCreateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -50,6 +60,9 @@ namespace DesafioTecnico.Api.Controllers
         }
 
         [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Put(Guid id, [FromBody] ApartamentoUpdateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -62,6 +75,8 @@ namespace DesafioTecnico.Api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Delete(Guid id)
         {
             var existing = await _service.GetByIdAsync(id);

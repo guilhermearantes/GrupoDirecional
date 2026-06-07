@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using DesafioTecnico.Infrastructure.Data;
 using DesafioTecnico.Infrastructure.Security;
 
@@ -8,22 +9,33 @@ namespace DesafioTecnico.Infrastructure.Services
     {
         private readonly AppDbContext _context;
         private readonly JwtTokenGenerator _tokenGenerator;
+        private readonly ILogger<AuthService> _logger;
 
-        public AuthService(AppDbContext context, JwtTokenGenerator tokenGenerator)
+        public AuthService(AppDbContext context, JwtTokenGenerator tokenGenerator, ILogger<AuthService> logger)
         {
             _context = context;
             _tokenGenerator = tokenGenerator;
+            _logger = logger;
         }
 
         public async Task<(string Token, int ExpiresInSeconds)?> AuthenticateAsync(string username, string password)
         {
             var user = await _context.Usuarios.FirstOrDefaultAsync(u => u.Username == username);
-            if (user == null) return null;
+            if (user == null)
+            {
+                _logger.LogWarning("Login falhou: usuário '{Username}' não encontrado", username);
+                return null;
+            }
 
-            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash)) return null;
+            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            {
+                _logger.LogWarning("Login falhou: senha incorreta para '{Username}'", username);
+                return null;
+            }
 
             var token = _tokenGenerator.GenerateToken(user);
             var expiresInSeconds = _tokenGenerator.GetExpiryMinutes() * 60;
+            _logger.LogInformation("Login bem-sucedido para '{Username}'", username);
             return (token, expiresInSeconds);
         }
     }

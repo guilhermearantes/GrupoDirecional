@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using AutoMapper;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
 using DesafioTecnico.Api.DTOs;
@@ -9,6 +10,7 @@ namespace DesafioTecnico.Api.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public class ReservasController : ControllerBase
     {
         private readonly IReservaService _service;
@@ -21,13 +23,18 @@ namespace DesafioTecnico.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ReservaReadDto>>> Get()
+        [ProducesResponseType(typeof(PagedResult<ReservaReadDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PagedResult<ReservaReadDto>>> Get([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            var items = await _service.GetAllAsync();
-            return Ok(_mapper.Map<IEnumerable<ReservaReadDto>>(items));
+            var all = await _service.GetAllAsync();
+            var list = all.ToList();
+            var items = list.Skip((page - 1) * pageSize).Take(pageSize);
+            return Ok(new PagedResult<ReservaReadDto>(_mapper.Map<IEnumerable<ReservaReadDto>>(items), page, pageSize, list.Count));
         }
 
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(ReservaReadDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ReservaReadDto>> Get(Guid id)
         {
             var item = await _service.GetByIdAsync(id);
@@ -36,6 +43,8 @@ namespace DesafioTecnico.Api.Controllers
         }
 
         [HttpPost]
+        [ProducesResponseType(typeof(ReservaReadDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> Post([FromBody] ReservaCreateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -45,6 +54,9 @@ namespace DesafioTecnico.Api.Controllers
         }
 
         [HttpPost("{id}/confirm")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Confirm(Guid id)
         {
             try
@@ -59,6 +71,9 @@ namespace DesafioTecnico.Api.Controllers
         }
 
         [HttpPost("{id}/cancel")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Cancel(Guid id)
         {
             try
@@ -73,6 +88,8 @@ namespace DesafioTecnico.Api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Delete(Guid id)
         {
             var existing = await _service.GetByIdAsync(id);

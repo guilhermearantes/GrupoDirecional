@@ -1,4 +1,7 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.RateLimiting;
 using DesafioTecnico.Infrastructure.Data;
 using Scalar.AspNetCore;
 
@@ -34,6 +37,19 @@ builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IAu
 builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IVendaService, DesafioTecnico.Infrastructure.Services.VendaService>();
 // Apartamento service
 builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IApartamentoService, DesafioTecnico.Infrastructure.Services.ApartamentoService>();
+
+// Rate limiting — máx 5 tentativas de login por minuto por IP
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("login", o =>
+    {
+        o.PermitLimit = 5;
+        o.Window = TimeSpan.FromMinutes(1);
+        o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        o.QueueLimit = 0;
+    });
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
 
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"];
@@ -80,6 +96,7 @@ app.UseMiddleware<DesafioTecnico.Api.Middleware.ExceptionMiddleware>();
 
 app.UseHttpsRedirection();
 
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 

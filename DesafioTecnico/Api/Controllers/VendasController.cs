@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using AutoMapper;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
 using DesafioTecnico.Api.DTOs;
@@ -9,6 +10,7 @@ namespace DesafioTecnico.Api.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public class VendasController : ControllerBase
     {
         private readonly IVendaService _vendaService;
@@ -21,13 +23,18 @@ namespace DesafioTecnico.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<VendaReadDto>>> Get()
+        [ProducesResponseType(typeof(PagedResult<VendaReadDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PagedResult<VendaReadDto>>> Get([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            var items = await _vendaService.GetAllAsync();
-            return Ok(_mapper.Map<IEnumerable<VendaReadDto>>(items));
+            var all = await _vendaService.GetAllAsync();
+            var list = all.ToList();
+            var items = list.Skip((page - 1) * pageSize).Take(pageSize);
+            return Ok(new PagedResult<VendaReadDto>(_mapper.Map<IEnumerable<VendaReadDto>>(items), page, pageSize, list.Count));
         }
 
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(VendaReadDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<VendaReadDto>> Get(Guid id)
         {
             var item = await _vendaService.GetByIdAsync(id);
@@ -36,6 +43,8 @@ namespace DesafioTecnico.Api.Controllers
         }
 
         [HttpPost]
+        [ProducesResponseType(typeof(VendaReadDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> Post([FromBody] VendaCreateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -53,6 +62,9 @@ namespace DesafioTecnico.Api.Controllers
         }
 
         [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Put(Guid id, [FromBody] VendaUpdateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);

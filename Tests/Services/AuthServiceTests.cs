@@ -37,7 +37,7 @@ namespace Tests.Services
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(inMemorySettings).Build();
 
             var tokenGenerator = new DesafioTecnico.Infrastructure.Security.JwtTokenGenerator(configuration);
-            var authService = new DesafioTecnico.Infrastructure.Services.AuthService(context, tokenGenerator);
+            var authService = new DesafioTecnico.Infrastructure.Services.AuthService(context, tokenGenerator, Microsoft.Extensions.Logging.Abstractions.NullLogger<DesafioTecnico.Infrastructure.Services.AuthService>.Instance);
 
             var result = await authService.AuthenticateAsync("admin", "secret");
 
@@ -76,7 +76,7 @@ namespace Tests.Services
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(inMemorySettings).Build();
 
             var tokenGenerator = new DesafioTecnico.Infrastructure.Security.JwtTokenGenerator(configuration);
-            var authService = new DesafioTecnico.Infrastructure.Services.AuthService(context, tokenGenerator);
+            var authService = new DesafioTecnico.Infrastructure.Services.AuthService(context, tokenGenerator, Microsoft.Extensions.Logging.Abstractions.NullLogger<DesafioTecnico.Infrastructure.Services.AuthService>.Instance);
 
             var result = await authService.AuthenticateAsync("admin", "wrongpassword");
             Assert.Null(result);
@@ -102,7 +102,7 @@ namespace Tests.Services
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(inMemorySettings).Build();
 
             var tokenGenerator = new DesafioTecnico.Infrastructure.Security.JwtTokenGenerator(configuration);
-            var authService = new DesafioTecnico.Infrastructure.Services.AuthService(context, tokenGenerator);
+            var authService = new DesafioTecnico.Infrastructure.Services.AuthService(context, tokenGenerator, Microsoft.Extensions.Logging.Abstractions.NullLogger<DesafioTecnico.Infrastructure.Services.AuthService>.Instance);
 
             var result = await authService.AuthenticateAsync("nonexistent", "secret");
             Assert.Null(result);

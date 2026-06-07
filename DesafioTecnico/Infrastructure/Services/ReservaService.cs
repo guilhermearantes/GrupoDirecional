@@ -4,6 +4,7 @@ namespace DesafioTecnico.Infrastructure.Services
     using DesafioTecnico.Domain.Entities;
     using DesafioTecnico.Infrastructure.Data;
     using DesafioTecnico.Infrastructure.Services.Interfaces;
+    using Microsoft.Extensions.Logging;
 
     public class ReservaService : IReservaService
     {
@@ -11,13 +12,15 @@ namespace DesafioTecnico.Infrastructure.Services
         private readonly IReservaRepository _reservaRepo;
         private readonly IApartamentoRepository _apartRepo;
         private readonly IVendaRepository _vendaRepo;
+        private readonly ILogger<ReservaService> _logger;
 
-        public ReservaService(AppDbContext context, IReservaRepository reservaRepo, IApartamentoRepository apartRepo, IVendaRepository vendaRepo)
+        public ReservaService(AppDbContext context, IReservaRepository reservaRepo, IApartamentoRepository apartRepo, IVendaRepository vendaRepo, ILogger<ReservaService> logger)
         {
             _context = context;
             _reservaRepo = reservaRepo;
             _apartRepo = apartRepo;
             _vendaRepo = vendaRepo;
+            _logger = logger;
         }
 
         public Task<IEnumerable<Reserva>> GetAllAsync() => _reservaRepo.GetAllAsync();
@@ -26,32 +29,28 @@ namespace DesafioTecnico.Infrastructure.Services
 
         public async Task<Reserva> CreateAsync(Reserva reserva)
         {
-            var available = await _apartRepo.IsAvailableAsync(reserva.ApartamentoId);
-            if (!available) throw new InvalidOperationException("Apartamento não disponível para reserva");
+            var apt = await _apartRepo.GetByIdAsync(reserva.ApartamentoId);
+            if (apt == null) throw new InvalidOperationException("Apartamento não encontrado.");
 
-            reserva.Id = Guid.NewGuid();
-            reserva.DataReserva = DateTime.UtcNow;
-            reserva.Status = Domain.Enums.StatusReserva.Pendente;
+            apt.Reservar();
+            reserva.Iniciar();
 
             await _reservaRepo.AddAsync(reserva);
+            await _apartRepo.UpdateAsync(apt);
 
-            var apt = await _apartRepo.GetByIdAsync(reserva.ApartamentoId);
-            if (apt != null)
-            {
-                apt.Status = Domain.Enums.StatusApartamento.Reservado;
-                await _apartRepo.UpdateAsync(apt);
-            }
-
+            _logger.LogInformation("Reserva {ReservaId} criada para apartamento {ApartamentoId}", reserva.Id, reserva.ApartamentoId);
             return reserva;
         }
 
         public async Task ConfirmAsync(Guid id)
         {
             var reserva = await _reservaRepo.GetByIdAsync(id);
-            if (reserva == null) throw new InvalidOperationException("Reserva não encontrada");
-            if (reserva.Status != Domain.Enums.StatusReserva.Pendente) throw new InvalidOperationException("Reserva não está em estado pendente");
+            if (reserva == null) throw new InvalidOperationException("Reserva não encontrada.");
 
             var apt = await _apartRepo.GetByIdAsync(reserva.ApartamentoId);
+
+            reserva.Confirmar();
+            apt?.Vender();
 
             var venda = new Venda
             {
@@ -62,7 +61,6 @@ namespace DesafioTecnico.Infrastructure.Services
                 ValorPago = apt?.Valor ?? 0m
             };
 
-            // Wrap the entire confirmation (venda + status updates) in a single transaction
             var provider = _context.Database.ProviderName;
             if (provider != "Microsoft.EntityFrameworkCore.InMemory")
             {
@@ -70,8 +68,7 @@ namespace DesafioTecnico.Infrastructure.Services
                 try
                 {
                     await _vendaRepo.AddAsync(venda);
-                    if (apt != null) { apt.Status = Domain.Enums.StatusApartamento.Vendido; await _apartRepo.UpdateAsync(apt); }
-                    reserva.Status = Domain.Enums.StatusReserva.Confirmada;
+                    if (apt != null) await _apartRepo.UpdateAsync(apt);
                     await _reservaRepo.UpdateAsync(reserva);
                     await trx.CommitAsync();
                 }
@@ -84,27 +81,27 @@ namespace DesafioTecnico.Infrastructure.Services
             else
             {
                 await _vendaRepo.AddAsync(venda);
-                if (apt != null) { apt.Status = Domain.Enums.StatusApartamento.Vendido; await _apartRepo.UpdateAsync(apt); }
-                reserva.Status = Domain.Enums.StatusReserva.Confirmada;
+                if (apt != null) await _apartRepo.UpdateAsync(apt);
                 await _reservaRepo.UpdateAsync(reserva);
             }
+
+            _logger.LogInformation("Reserva {ReservaId} confirmada — Venda {VendaId} gerada", id, venda.Id);
         }
 
         public async Task CancelAsync(Guid id)
         {
             var reserva = await _reservaRepo.GetByIdAsync(id);
-            if (reserva == null) throw new InvalidOperationException("Reserva não encontrada");
-            if (reserva.Status != Domain.Enums.StatusReserva.Pendente) throw new InvalidOperationException("Somente reservas pendentes podem ser canceladas");
-
-            reserva.Status = Domain.Enums.StatusReserva.Cancelada;
-            await _reservaRepo.UpdateAsync(reserva);
+            if (reserva == null) throw new InvalidOperationException("Reserva não encontrada.");
 
             var apt = await _apartRepo.GetByIdAsync(reserva.ApartamentoId);
-            if (apt != null)
-            {
-                apt.Status = Domain.Enums.StatusApartamento.Disponivel;
-                await _apartRepo.UpdateAsync(apt);
-            }
+
+            reserva.Cancelar();
+            apt?.Liberar();
+
+            await _reservaRepo.UpdateAsync(reserva);
+            if (apt != null) await _apartRepo.UpdateAsync(apt);
+
+            _logger.LogInformation("Reserva {ReservaId} cancelada", id);
         }
 
         public Task UpdateAsync(Reserva reserva) => _reservaRepo.UpdateAsync(reserva);
