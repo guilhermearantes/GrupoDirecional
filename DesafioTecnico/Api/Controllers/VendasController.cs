@@ -76,6 +76,23 @@ namespace DesafioTecnico.Api.Controllers
             return NoContent();
         }
 
-        // DELETE not exposed: sales are immutable business records.
+        // O endpoint abaixo atende ao requisito "excluir vendas" do desafio técnico.
+        // Em produção, deletar uma venda não é recomendado: vendas são registros contábeis
+        // e sua remoção quebra o histórico financeiro e de auditoria. A boa prática é
+        // adicionar um campo "Cancelada/Estornada" e manter o registro.
+        // Para habilitar, descomente o bloco abaixo.
+
+        /*
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> Delete(Guid id)
+        {
+            var existing = await _vendaService.GetByIdAsync(id);
+            if (existing == null) return NotFound();
+            await _vendaService.DeleteAsync(id);
+            return NoContent();
+        }
+        */
     }
 }

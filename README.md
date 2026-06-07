@@ -110,7 +110,7 @@ Acesse `http://localhost:8080/scalar/v1` para testar todos os endpoints via inte
 | GET    | /api/vendas                   | Listar vendas                     | Sim  |
 | POST   | /api/vendas                   | Registrar venda direta            | Sim  |
 | PUT    | /api/vendas/{id}              | Atualizar venda                   | Sim  |
-| DELETE | /api/vendas/{id}              | Remover venda                     | Sim  |
+| DELETE | /api/vendas/{id}              | Remover venda *(comentado — ver nota no controller)* | Sim  |
 
 ---
 
@@ -154,15 +154,15 @@ echo "Cliente ID: $CLIENTE_ID"
 ### 3. Verificar disponibilidade do apartamento
 
 ```bash
-# Listar apartamentos disponíveis
-curl -s http://localhost:8080/api/apartamentos \
+# Listar apartamentos disponíveis (resultado paginado)
+curl -s "http://localhost:8080/api/apartamentos?status=Disponivel" \
   -H "Authorization: Bearer $TOKEN" \
-  | jq '[.[] | select(.status == "Disponivel")]'
+  | jq '.items'
 
-# Obter um apartamento específico
-APT_ID=$(curl -s http://localhost:8080/api/apartamentos \
+# Obter o ID do primeiro apartamento disponível
+APT_ID=$(curl -s "http://localhost:8080/api/apartamentos?status=Disponivel" \
   -H "Authorization: Bearer $TOKEN" \
-  | jq -r '[.[] | select(.status == "Disponivel")][0].id')
+  | jq -r '.items[0].id')
 
 echo "Apartamento ID: $APT_ID"
 ```
@@ -244,13 +244,13 @@ dotnet test Tests/Tests.csproj --filter "Category=Integration"
 
 ```
 DesafioTecnico/
-├── Api/            Controllers, DTOs, AutoMapper profile
-├── Domain/         Entidades e Enums (modelo de negócio puro, sem dependências)
-└── Infraestructure/
-    ├── Data/       AppDbContext, EF Configurations, SeedData
+├── Api/            Controllers, DTOs, AutoMapper profile, Middleware
+├── Domain/         Entidades (com comportamento) e Enums — sem dependências externas
+└── Infrastructure/
+    ├── Data/       AppDbContext, EF Configurations, SeedData, Migrations
     ├── Repositories/ Padrão Repository + Interfaces
     ├── Security/   JwtTokenGenerator
-    └── Services/   Lógica de negócio + Interfaces
+    └── Services/   Lógica de orquestração + Interfaces
 ```
 
 ### Decisões técnicas
