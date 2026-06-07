@@ -8,7 +8,7 @@ namespace Tests.Domain
         // ── Apartamento.Reservar ─────────────────────────────────────────────
 
         [Fact]
-        public void Reservar_QuandoDisponivel_MudaStatusParaReservado()
+        public void Reservar_DeveMudarStatusParaReservado_QuandoDisponivel()
         {
             var apt = new Apartamento { Status = StatusApartamento.Disponivel };
             apt.Reservar();
@@ -18,7 +18,7 @@ namespace Tests.Domain
         [Theory]
         [InlineData(StatusApartamento.Reservado)]
         [InlineData(StatusApartamento.Vendido)]
-        public void Reservar_QuandoNaoDisponivel_LancaExcecao(StatusApartamento status)
+        public void Reservar_DeveLancarExcecao_QuandoNaoDisponivel(StatusApartamento status)
         {
             var apt = new Apartamento { Status = status };
             Assert.Throws<InvalidOperationException>(() => apt.Reservar());
@@ -27,7 +27,7 @@ namespace Tests.Domain
         // ── Apartamento.Vender (via confirmação de reserva) ──────────────────
 
         [Fact]
-        public void Vender_QuandoReservado_MudaStatusParaVendido()
+        public void Vender_DeveMudarStatusParaVendido_QuandoReservado()
         {
             var apt = new Apartamento { Status = StatusApartamento.Reservado };
             apt.Vender();
@@ -37,7 +37,7 @@ namespace Tests.Domain
         [Theory]
         [InlineData(StatusApartamento.Disponivel)]
         [InlineData(StatusApartamento.Vendido)]
-        public void Vender_QuandoNaoReservado_LancaExcecao(StatusApartamento status)
+        public void Vender_DeveLancarExcecao_QuandoNaoReservado(StatusApartamento status)
         {
             var apt = new Apartamento { Status = status };
             Assert.Throws<InvalidOperationException>(() => apt.Vender());
@@ -46,7 +46,7 @@ namespace Tests.Domain
         // ── Apartamento.VenderDiretamente (POST /vendas sem reserva) ─────────
 
         [Fact]
-        public void VenderDiretamente_QuandoDisponivel_MudaStatusParaVendido()
+        public void VenderDiretamente_DeveMudarStatusParaVendido_QuandoDisponivel()
         {
             var apt = new Apartamento { Status = StatusApartamento.Disponivel };
             apt.VenderDiretamente();
@@ -56,7 +56,7 @@ namespace Tests.Domain
         [Theory]
         [InlineData(StatusApartamento.Reservado)]
         [InlineData(StatusApartamento.Vendido)]
-        public void VenderDiretamente_QuandoNaoDisponivel_LancaExcecao(StatusApartamento status)
+        public void VenderDiretamente_DeveLancarExcecao_QuandoNaoDisponivel(StatusApartamento status)
         {
             var apt = new Apartamento { Status = status };
             Assert.Throws<InvalidOperationException>(() => apt.VenderDiretamente());
@@ -65,7 +65,7 @@ namespace Tests.Domain
         // ── Apartamento.Liberar ───────────────────────────────────────────────
 
         [Fact]
-        public void Liberar_QuandoReservado_MudaStatusParaDisponivel()
+        public void Liberar_DeveMudarStatusParaDisponivel_QuandoReservado()
         {
             var apt = new Apartamento { Status = StatusApartamento.Reservado };
             apt.Liberar();
@@ -75,7 +75,7 @@ namespace Tests.Domain
         [Theory]
         [InlineData(StatusApartamento.Disponivel)]
         [InlineData(StatusApartamento.Vendido)]
-        public void Liberar_QuandoNaoReservado_LancaExcecao(StatusApartamento status)
+        public void Liberar_DeveLancarExcecao_QuandoNaoReservado(StatusApartamento status)
         {
             var apt = new Apartamento { Status = status };
             Assert.Throws<InvalidOperationException>(() => apt.Liberar());
@@ -84,7 +84,7 @@ namespace Tests.Domain
         // ── Reserva.Iniciar ───────────────────────────────────────────────────
 
         [Fact]
-        public void Iniciar_DefineIdDataEStatusPendente()
+        public void Iniciar_DeveDefinirIdDataEStatusPendente_QuandoChamado()
         {
             var reserva = new Reserva();
             reserva.Iniciar();
@@ -96,7 +96,7 @@ namespace Tests.Domain
         // ── Reserva.Confirmar ─────────────────────────────────────────────────
 
         [Fact]
-        public void Confirmar_QuandoPendente_MudaStatusParaConfirmada()
+        public void Confirmar_DeveMudarStatusParaConfirmada_QuandoPendente()
         {
             var reserva = new Reserva { Status = StatusReserva.Pendente };
             reserva.Confirmar();
@@ -106,7 +106,7 @@ namespace Tests.Domain
         [Theory]
         [InlineData(StatusReserva.Confirmada)]
         [InlineData(StatusReserva.Cancelada)]
-        public void Confirmar_QuandoNaoPendente_LancaExcecao(StatusReserva status)
+        public void Confirmar_DeveLancarExcecao_QuandoNaoPendente(StatusReserva status)
         {
             var reserva = new Reserva { Status = status };
             Assert.Throws<InvalidOperationException>(() => reserva.Confirmar());
@@ -115,7 +115,7 @@ namespace Tests.Domain
         // ── Reserva.Cancelar ──────────────────────────────────────────────────
 
         [Fact]
-        public void Cancelar_QuandoPendente_MudaStatusParaCancelada()
+        public void Cancelar_DeveMudarStatusParaCancelada_QuandoPendente()
         {
             var reserva = new Reserva { Status = StatusReserva.Pendente };
             reserva.Cancelar();
@@ -125,7 +125,7 @@ namespace Tests.Domain
         [Theory]
         [InlineData(StatusReserva.Confirmada)]
         [InlineData(StatusReserva.Cancelada)]
-        public void Cancelar_QuandoNaoPendente_LancaExcecao(StatusReserva status)
+        public void Cancelar_DeveLancarExcecao_QuandoNaoPendente(StatusReserva status)
         {
             var reserva = new Reserva { Status = status };
             Assert.Throws<InvalidOperationException>(() => reserva.Cancelar());

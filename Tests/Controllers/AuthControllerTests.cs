@@ -9,7 +9,7 @@ namespace Tests.Controllers
     public class AuthControllerTests
     {
         [Fact]
-        public async Task Login_InvalidCredentials_ReturnsUnauthorized()
+        public async Task Login_DeveRetornarUnauthorized_QuandoCredenciaisInvalidas()
         {
             var authMock = new Mock<IAuthService>();
             authMock.Setup(a => a.AuthenticateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))

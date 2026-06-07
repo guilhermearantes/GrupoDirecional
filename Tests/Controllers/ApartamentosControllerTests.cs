@@ -20,7 +20,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task GetById_ReturnsNotFound_WhenNull()
+        public async Task ObterPorId_DeveRetornarNotFound_QuandoNaoEncontrado()
         {
             _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Apartamento?)null);
             var controller = new ApartamentosController(_serviceMock.Object, _mapper);
@@ -31,7 +31,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Post_InvalidModel_ReturnsBadRequest()
+        public async Task Criar_DeveRetornarBadRequest_QuandoModeloInvalido()
         {
             var controller = new ApartamentosController(_serviceMock.Object, _mapper);
             controller.ModelState.AddModelError("Codigo", "Required");
@@ -42,7 +42,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Post_Valid_ReturnsCreated()
+        public async Task Criar_DeveRetornarCreated_QuandoDadosValidos()
         {
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
             _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Apartamento>(), It.IsAny<CancellationToken>())).ReturnsAsync(apt).Verifiable();
@@ -58,7 +58,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Put_NotFound_ReturnsNotFound()
+        public async Task Atualizar_DeveRetornarNotFound_QuandoNaoEncontrado()
         {
             _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Apartamento?)null);
             var controller = new ApartamentosController(_serviceMock.Object, _mapper);
@@ -69,7 +69,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Put_Existing_ReturnsNoContent()
+        public async Task Atualizar_DeveRetornarNoContent_QuandoExiste()
         {
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
             _serviceMock.Setup(s => s.GetByIdAsync(apt.Id, It.IsAny<CancellationToken>())).ReturnsAsync(apt);
@@ -85,7 +85,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Put_InvalidModel_ReturnsBadRequest()
+        public async Task Atualizar_DeveRetornarBadRequest_QuandoModeloInvalido()
         {
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
             var controller = new ApartamentosController(_serviceMock.Object, _mapper);
@@ -97,7 +97,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Delete_NotFound_ReturnsNotFound()
+        public async Task Excluir_DeveRetornarNotFound_QuandoNaoEncontrado()
         {
             _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Apartamento?)null);
             var controller = new ApartamentosController(_serviceMock.Object, _mapper);
@@ -108,7 +108,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Delete_Existing_ReturnsNoContent()
+        public async Task Excluir_DeveRetornarNoContent_QuandoExiste()
         {
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
             _serviceMock.Setup(s => s.GetByIdAsync(apt.Id, It.IsAny<CancellationToken>())).ReturnsAsync(apt);

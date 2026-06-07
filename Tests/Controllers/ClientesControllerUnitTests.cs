@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Tests.Controllers
 {
-    public class ClientesControllerUnitTests
+    public class ClientesControllerTests
     {
         private readonly Mock<IClienteService> _serviceMock;
         private readonly IMapper _mapper;
@@ -21,7 +21,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Post_Valid_ReturnsCreated()
+        public async Task Criar_DeveRetornarCreated_QuandoDadosValidos()
         {
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
             _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask).Verifiable();
@@ -36,7 +36,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task GetById_NotFound_ReturnsNotFound()
+        public async Task ObterPorId_DeveRetornarNotFound_QuandoNaoEncontrado()
         {
             _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Cliente?)null);
             var controller = new ClientesController(_serviceMock.Object, _mapper);
@@ -47,7 +47,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Put_NotFound_ReturnsNotFound()
+        public async Task Atualizar_DeveRetornarNotFound_QuandoNaoEncontrado()
         {
             _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Cliente?)null);
             var controller = new ClientesController(_serviceMock.Object, _mapper);
@@ -59,7 +59,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Put_Existing_ReturnsNoContent()
+        public async Task Atualizar_DeveRetornarNoContent_QuandoExiste()
         {
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
             _serviceMock.Setup(s => s.GetByIdAsync(cliente.Id, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
