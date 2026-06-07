@@ -91,26 +91,65 @@ Acesse `http://localhost:8080/scalar/v1` para testar todos os endpoints via inte
 
 ## Endpoints
 
-| Método | Rota                          | Descrição                         | Auth |
-|--------|-------------------------------|-----------------------------------|------|
-| POST   | /api/auth/login               | Gerar token JWT                   | Não  |
-| GET    | /api/clientes                 | Listar clientes                   | Sim  |
-| POST   | /api/clientes                 | Cadastrar cliente                 | Sim  |
-| PUT    | /api/clientes/{id}            | Atualizar cliente                 | Sim  |
-| DELETE | /api/clientes/{id}            | Remover cliente                   | Sim  |
-| GET    | /api/apartamentos             | Listar apartamentos               | Sim  |
-| POST   | /api/apartamentos             | Cadastrar apartamento             | Sim  |
-| PUT    | /api/apartamentos/{id}        | Atualizar apartamento             | Sim  |
-| DELETE | /api/apartamentos/{id}        | Remover apartamento               | Sim  |
-| GET    | /api/reservas                 | Listar reservas                   | Sim  |
-| POST   | /api/reservas                 | Criar reserva                     | Sim  |
-| POST   | /api/reservas/{id}/confirm    | Confirmar reserva (gera venda)    | Sim  |
-| POST   | /api/reservas/{id}/cancel     | Cancelar reserva                  | Sim  |
-| DELETE | /api/reservas/{id}            | Remover reserva                   | Sim  |
-| GET    | /api/vendas                   | Listar vendas                     | Sim  |
-| POST   | /api/vendas                   | Registrar venda direta            | Sim  |
-| PUT    | /api/vendas/{id}              | Atualizar venda                   | Sim  |
-| DELETE | /api/vendas/{id}              | Remover venda *(comentado — ver nota no controller)* | Sim  |
+| Método | Rota                          | Descrição                                    | Auth |
+|--------|-------------------------------|----------------------------------------------|------|
+| POST   | /api/auth/login               | Gerar token JWT                              | Não  |
+| GET    | /api/clientes                 | Listar clientes (paginado)                   | Sim  |
+| GET    | /api/clientes/{id}            | Obter cliente por ID                         | Sim  |
+| POST   | /api/clientes                 | Cadastrar cliente                            | Sim  |
+| PUT    | /api/clientes/{id}            | Atualizar cliente                            | Sim  |
+| DELETE | /api/clientes/{id}            | Remover cliente                              | Sim  |
+| GET    | /api/apartamentos             | Listar apartamentos (paginado, filtro status)| Sim  |
+| GET    | /api/apartamentos/{id}        | Obter apartamento por ID                     | Sim  |
+| POST   | /api/apartamentos             | Cadastrar apartamento                        | Sim  |
+| PUT    | /api/apartamentos/{id}        | Atualizar apartamento                        | Sim  |
+| DELETE | /api/apartamentos/{id}        | Remover apartamento                          | Sim  |
+| GET    | /api/reservas                 | Listar reservas (paginado)                   | Sim  |
+| GET    | /api/reservas/{id}            | Obter reserva por ID                         | Sim  |
+| POST   | /api/reservas                 | Criar reserva (→ apartamento Reservado)      | Sim  |
+| POST   | /api/reservas/{id}/confirm    | Confirmar reserva (→ gera venda + Vendido)   | Sim  |
+| POST   | /api/reservas/{id}/cancel     | Cancelar reserva (→ apartamento Disponivel)  | Sim  |
+| DELETE | /api/reservas/{id}            | Remover reserva                              | Sim  |
+| GET    | /api/vendas                   | Listar vendas (paginado)                     | Sim  |
+| GET    | /api/vendas/{id}              | Obter venda por ID                           | Sim  |
+| POST   | /api/vendas                   | Registrar venda direta (→ apartamento Vendido)| Sim  |
+| PUT    | /api/vendas/{id}              | Atualizar valor pago da venda                | Sim  |
+| DELETE | /api/vendas/{id}              | Remover venda                                | Sim  |
+
+---
+
+## Máquina de estados
+
+### Apartamento
+
+```
+Disponivel ──[reservar]──► Reservado ──[confirmar reserva]──► Vendido
+Disponivel ──[venda direta]──────────────────────────────────► Vendido
+Reservado  ──[cancelar reserva]──► Disponivel
+```
+
+### Reserva
+
+```
+Pendente ──[confirm]──► Confirmada
+Pendente ──[cancel] ──► Cancelada
+```
+
+---
+
+## Como rodar localmente sem Docker
+
+Para desenvolvimento rápido sem precisar do SQL Server, a API usa **SQLite automaticamente** quando detecta o ambiente `Development` sem connection string configurada.
+
+```bash
+# Restaurar dependências e executar
+dotnet run --project DesafioTecnico
+```
+
+A API sobe em `https://localhost:5001` / `http://localhost:5000`.  
+O banco SQLite é criado em memória na primeira execução com seed automático do usuário `admin`.
+
+> **Nota:** SQLite não suporta todas as funcionalidades do SQL Server. Para validar comportamentos de produção, use o docker-compose.
 
 ---
 

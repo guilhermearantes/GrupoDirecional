@@ -25,6 +25,10 @@ namespace DesafioTecnico.Api.Controllers
             _mapper = mapper;
         }
 
+        /// <summary>Lista todos os clientes com paginação.</summary>
+        /// <param name="page">Número da página (padrão: 1).</param>
+        /// <param name="pageSize">Itens por página (padrão: 20).</param>
+        /// <param name="ct">Token de cancelamento da requisição.</param>
         [HttpGet]
         [ProducesResponseType(typeof(PagedResult<ClienteReadDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PagedResult<ClienteReadDto>>> Get(
@@ -38,6 +42,7 @@ namespace DesafioTecnico.Api.Controllers
             return Ok(new PagedResult<ClienteReadDto>(_mapper.Map<IEnumerable<ClienteReadDto>>(items), page, pageSize, list.Count));
         }
 
+        /// <summary>Retorna um cliente pelo identificador único.</summary>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(ClienteReadDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -48,6 +53,8 @@ namespace DesafioTecnico.Api.Controllers
             return Ok(_mapper.Map<ClienteReadDto>(item));
         }
 
+        /// <summary>Cadastra um novo cliente.</summary>
+        /// <remarks>E-mail e CPF são únicos — retorna 409 se já existirem no sistema.</remarks>
         [HttpPost]
         [ProducesResponseType(typeof(ClienteReadDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -67,6 +74,8 @@ namespace DesafioTecnico.Api.Controllers
             return CreatedAtAction(nameof(Get), new { id = entity.Id }, _mapper.Map<ClienteReadDto>(entity));
         }
 
+        /// <summary>Atualiza os dados de um cliente existente.</summary>
+        /// <remarks>Retorna 409 se o novo e-mail ou CPF já pertencerem a outro cliente.</remarks>
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -90,6 +99,7 @@ namespace DesafioTecnico.Api.Controllers
             return NoContent();
         }
 
+        /// <summary>Remove um cliente pelo identificador único.</summary>
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -24,6 +24,10 @@ namespace DesafioTecnico.Api.Controllers
             _mapper = mapper;
         }
 
+        /// <summary>Lista todas as vendas com paginação.</summary>
+        /// <param name="page">Número da página (padrão: 1).</param>
+        /// <param name="pageSize">Itens por página (padrão: 20).</param>
+        /// <param name="ct">Token de cancelamento da requisição.</param>
         [HttpGet]
         [ProducesResponseType(typeof(PagedResult<VendaReadDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PagedResult<VendaReadDto>>> Get(
@@ -37,6 +41,7 @@ namespace DesafioTecnico.Api.Controllers
             return Ok(new PagedResult<VendaReadDto>(_mapper.Map<IEnumerable<VendaReadDto>>(items), page, pageSize, list.Count));
         }
 
+        /// <summary>Retorna uma venda pelo identificador único.</summary>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(VendaReadDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -47,6 +52,8 @@ namespace DesafioTecnico.Api.Controllers
             return Ok(_mapper.Map<VendaReadDto>(item));
         }
 
+        /// <summary>Registra uma venda direta, sem reserva prévia.</summary>
+        /// <remarks>Altera o status do apartamento para <c>Vendido</c>. Retorna 400 se o apartamento não estiver com status <c>Disponivel</c>.</remarks>
         [HttpPost]
         [ProducesResponseType(typeof(VendaReadDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -66,6 +73,7 @@ namespace DesafioTecnico.Api.Controllers
             }
         }
 
+        /// <summary>Atualiza o valor pago de uma venda existente.</summary>
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -81,10 +89,8 @@ namespace DesafioTecnico.Api.Controllers
             return NoContent();
         }
 
-        // Nota: em produção, deletar uma venda não é recomendado — vendas são registros
-        // contábeis e sua remoção quebra o histórico financeiro e de auditoria. A boa
-        // prática é adicionar um campo "Cancelada/Estornada" e manter o registro.
-        // Mantido aqui para atender ao requisito do desafio técnico.
+        /// <summary>Remove uma venda pelo identificador único.</summary>
+        /// <remarks>Em produção, prefira marcar a venda como estornada em vez de removê-la — vendas são registros contábeis. Disponível aqui por requisito do desafio.</remarks>
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

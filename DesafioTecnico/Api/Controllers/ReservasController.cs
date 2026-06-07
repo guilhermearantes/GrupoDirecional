@@ -24,6 +24,10 @@ namespace DesafioTecnico.Api.Controllers
             _mapper = mapper;
         }
 
+        /// <summary>Lista todas as reservas com paginação.</summary>
+        /// <param name="page">Número da página (padrão: 1).</param>
+        /// <param name="pageSize">Itens por página (padrão: 20).</param>
+        /// <param name="ct">Token de cancelamento da requisição.</param>
         [HttpGet]
         [ProducesResponseType(typeof(PagedResult<ReservaReadDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PagedResult<ReservaReadDto>>> Get(
@@ -37,6 +41,7 @@ namespace DesafioTecnico.Api.Controllers
             return Ok(new PagedResult<ReservaReadDto>(_mapper.Map<IEnumerable<ReservaReadDto>>(items), page, pageSize, list.Count));
         }
 
+        /// <summary>Retorna uma reserva pelo identificador único.</summary>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(ReservaReadDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -47,6 +52,8 @@ namespace DesafioTecnico.Api.Controllers
             return Ok(_mapper.Map<ReservaReadDto>(item));
         }
 
+        /// <summary>Cria uma nova reserva para um apartamento disponível.</summary>
+        /// <remarks>Altera o status do apartamento para <c>Reservado</c>. Retorna 400 se o apartamento não estiver com status <c>Disponivel</c>.</remarks>
         [HttpPost]
         [ProducesResponseType(typeof(ReservaReadDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -98,6 +105,7 @@ namespace DesafioTecnico.Api.Controllers
             }
         }
 
+        /// <summary>Remove uma reserva pelo identificador único.</summary>
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

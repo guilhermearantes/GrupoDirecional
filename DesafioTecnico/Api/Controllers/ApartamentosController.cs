@@ -24,6 +24,11 @@ namespace DesafioTecnico.Api.Controllers
             _mapper = mapper;
         }
 
+        /// <summary>Lista apartamentos com suporte a paginação e filtro por status.</summary>
+        /// <param name="status">Filtro opcional: <c>Disponivel</c>, <c>Reservado</c> ou <c>Vendido</c>. Omitir retorna todos.</param>
+        /// <param name="page">Número da página (padrão: 1).</param>
+        /// <param name="pageSize">Itens por página (padrão: 20).</param>
+        /// <param name="ct">Token de cancelamento da requisição.</param>
         [HttpGet]
         [ProducesResponseType(typeof(PagedResult<ApartamentoReadDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PagedResult<ApartamentoReadDto>>> Get(
@@ -41,6 +46,7 @@ namespace DesafioTecnico.Api.Controllers
             return Ok(new PagedResult<ApartamentoReadDto>(_mapper.Map<IEnumerable<ApartamentoReadDto>>(items), page, pageSize, list.Count));
         }
 
+        /// <summary>Retorna um apartamento pelo identificador único.</summary>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(ApartamentoReadDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -51,6 +57,7 @@ namespace DesafioTecnico.Api.Controllers
             return Ok(_mapper.Map<ApartamentoReadDto>(item));
         }
 
+        /// <summary>Cadastra um novo apartamento.</summary>
         [HttpPost]
         [ProducesResponseType(typeof(ApartamentoReadDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -62,6 +69,7 @@ namespace DesafioTecnico.Api.Controllers
             return CreatedAtAction(nameof(Get), new { id = created.Id }, _mapper.Map<ApartamentoReadDto>(created));
         }
 
+        /// <summary>Atualiza os dados de um apartamento existente.</summary>
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -77,6 +85,7 @@ namespace DesafioTecnico.Api.Controllers
             return NoContent();
         }
 
+        /// <summary>Remove um apartamento pelo identificador único.</summary>
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

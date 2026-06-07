@@ -20,6 +20,8 @@ namespace DesafioTecnico.Api.Controllers
             _authService = authService;
         }
 
+        /// <summary>Autentica um usuário e retorna um token JWT Bearer.</summary>
+        /// <remarks>Rate limiting aplicado: máximo de 5 tentativas por minuto por IP.</remarks>
         [HttpPost("login")]
         [EnableRateLimiting("login")]
         [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
