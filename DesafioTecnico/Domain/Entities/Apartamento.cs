@@ -27,6 +27,14 @@ namespace DesafioTecnico.Domain.Entities
             Status = Enums.StatusApartamento.Vendido;
         }
 
+        // Venda direta (sem reserva prévia) — só permitida quando Disponivel.
+        public void VenderDiretamente()
+        {
+            if (Status != Enums.StatusApartamento.Disponivel)
+                throw new InvalidOperationException("Venda direta só é permitida em apartamentos disponíveis.");
+            Status = Enums.StatusApartamento.Vendido;
+        }
+
         public void Liberar()
         {
             if (Status != Enums.StatusApartamento.Reservado)

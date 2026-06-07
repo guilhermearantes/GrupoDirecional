@@ -24,15 +24,15 @@ namespace DesafioTecnico.Infrastructure.Services
 
         public async Task<Venda> CreateAsync(Venda venda)
         {
-            // Allow sale if apartment exists and is not already sold. Reservado is allowed (confirmation flow).
-            var aptCheck = await _apartRepo.GetByIdAsync(venda.ApartamentoId);
-            if (aptCheck == null) throw new InvalidOperationException("Apartamento n„o encontrado");
-            if (aptCheck.Status == Domain.Enums.StatusApartamento.Vendido) throw new InvalidOperationException("Apartamento n„o disponÌvel");
+            var apt = await _apartRepo.GetByIdAsync(venda.ApartamentoId)
+                ?? throw new InvalidOperationException("Apartamento n√£o encontrado.");
+
+            // Lan√ßa InvalidOperationException se n√£o estiver Disponivel
+            apt.VenderDiretamente();
 
             venda.Id = Guid.NewGuid();
             venda.DataVenda = DateTime.UtcNow;
 
-            // Some providers (InMemory) do not support transactions; only use explicit transaction when supported
             var provider = _context.Database.ProviderName;
             if (provider != "Microsoft.EntityFrameworkCore.InMemory")
             {
@@ -40,14 +40,7 @@ namespace DesafioTecnico.Infrastructure.Services
                 try
                 {
                     await _vendaRepo.AddAsync(venda);
-
-                    var apt = await _apartRepo.GetByIdAsync(venda.ApartamentoId);
-                    if (apt != null)
-                    {
-                        apt.Status = Domain.Enums.StatusApartamento.Vendido;
-                        await _apartRepo.UpdateAsync(apt);
-                    }
-
+                    await _apartRepo.UpdateAsync(apt);
                     await trx.CommitAsync();
                     return venda;
                 }
@@ -59,14 +52,8 @@ namespace DesafioTecnico.Infrastructure.Services
             }
             else
             {
-                // InMemory: perform sequential operations
                 await _vendaRepo.AddAsync(venda);
-                var apt = await _apartRepo.GetByIdAsync(venda.ApartamentoId);
-                if (apt != null)
-                {
-                    apt.Status = Domain.Enums.StatusApartamento.Vendido;
-                    await _apartRepo.UpdateAsync(apt);
-                }
+                await _apartRepo.UpdateAsync(apt);
                 return venda;
             }
         }

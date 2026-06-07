@@ -14,7 +14,7 @@ namespace Tests.Services
             using var context = new DesafioTecnico.Infrastructure.Data.AppDbContext(options);
 
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
-            var apt = Fixtures.FakeDataBuilder.CreateApartamento();
+            var apt = Fixtures.FakeDataBuilder.CreateApartamento(); // Status = Disponivel
             context.Clientes.Add(cliente);
             context.Apartamentos.Add(apt);
             context.SaveChanges();
@@ -28,22 +28,24 @@ namespace Tests.Services
             var created = await vendaService.CreateAsync(venda);
 
             var updatedApt = await apartRepo.GetByIdAsync(apt.Id);
-            Xunit.Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Vendido, updatedApt.Status);
-            Xunit.Assert.Equal(venda.Id, created.Id);
+            Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Vendido, updatedApt.Status);
+            Assert.Equal(venda.Id, created.Id);
         }
 
-        [Fact]
-        public async Task CreateVenda_ThrowsWhenApartmentNotAvailable()
+        [Theory]
+        [InlineData(DesafioTecnico.Domain.Enums.StatusApartamento.Vendido)]
+        [InlineData(DesafioTecnico.Domain.Enums.StatusApartamento.Reservado)]
+        public async Task CreateVenda_ThrowsWhenApartmentNotDisponivel(DesafioTecnico.Domain.Enums.StatusApartamento status)
         {
             var options = new DbContextOptionsBuilder<DesafioTecnico.Infrastructure.Data.AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDb_CreateVenda_NotAvailable")
+                .UseInMemoryDatabase(databaseName: $"TestDb_CreateVenda_NotAvailable_{status}")
                 .Options;
 
             using var context = new DesafioTecnico.Infrastructure.Data.AppDbContext(options);
 
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
-            apt.Status = DesafioTecnico.Domain.Enums.StatusApartamento.Vendido;
+            apt.Status = status;
             context.Clientes.Add(cliente);
             context.Apartamentos.Add(apt);
             context.SaveChanges();
