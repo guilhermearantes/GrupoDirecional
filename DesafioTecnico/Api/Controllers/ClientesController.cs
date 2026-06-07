@@ -25,9 +25,12 @@ namespace DesafioTecnico.Api.Controllers
 
         [HttpGet]
         [ProducesResponseType(typeof(PagedResult<ClienteReadDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<PagedResult<ClienteReadDto>>> Get([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<PagedResult<ClienteReadDto>>> Get(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            CancellationToken ct = default)
         {
-            var all = await _service.GetAllAsync();
+            var all = await _service.GetAllAsync(ct);
             var list = all.ToList();
             var items = list.Skip((page - 1) * pageSize).Take(pageSize);
             return Ok(new PagedResult<ClienteReadDto>(_mapper.Map<IEnumerable<ClienteReadDto>>(items), page, pageSize, list.Count));
@@ -36,9 +39,9 @@ namespace DesafioTecnico.Api.Controllers
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(ClienteReadDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<ClienteReadDto>> Get(Guid id)
+        public async Task<ActionResult<ClienteReadDto>> Get(Guid id, CancellationToken ct = default)
         {
-            var item = await _service.GetByIdAsync(id);
+            var item = await _service.GetByIdAsync(id, ct);
             if (item == null) return NotFound();
             return Ok(_mapper.Map<ClienteReadDto>(item));
         }
@@ -47,13 +50,13 @@ namespace DesafioTecnico.Api.Controllers
         [ProducesResponseType(typeof(ClienteReadDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
-        public async Task<ActionResult> Post([FromBody] ClienteCreateDto dto)
+        public async Task<ActionResult> Post([FromBody] ClienteCreateDto dto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var entity = _mapper.Map<Domain.Entities.Cliente>(dto);
             try
             {
-                await _service.CreateAsync(entity);
+                await _service.CreateAsync(entity, ct);
             }
             catch (DbUpdateException)
             {
@@ -67,16 +70,16 @@ namespace DesafioTecnico.Api.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
-        public async Task<ActionResult> Put(Guid id, [FromBody] ClienteUpdateDto dto)
+        public async Task<ActionResult> Put(Guid id, [FromBody] ClienteUpdateDto dto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            var existing = await _service.GetByIdAsync(id);
+            var existing = await _service.GetByIdAsync(id, ct);
             if (existing == null) return NotFound();
             var toUpdate = _mapper.Map(dto, existing);
             toUpdate.Id = id;
             try
             {
-                await _service.UpdateAsync(toUpdate);
+                await _service.UpdateAsync(toUpdate, ct);
             }
             catch (DbUpdateException)
             {
@@ -88,11 +91,11 @@ namespace DesafioTecnico.Api.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult> Delete(Guid id)
+        public async Task<ActionResult> Delete(Guid id, CancellationToken ct = default)
         {
-            var existing = await _service.GetByIdAsync(id);
+            var existing = await _service.GetByIdAsync(id, ct);
             if (existing == null) return NotFound();
-            await _service.DeleteAsync(id);
+            await _service.DeleteAsync(id, ct);
             return NoContent();
         }
     }

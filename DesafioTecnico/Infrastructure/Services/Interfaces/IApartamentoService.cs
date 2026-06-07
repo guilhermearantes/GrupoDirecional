@@ -4,10 +4,10 @@ namespace DesafioTecnico.Infrastructure.Services.Interfaces
 {
     public interface IApartamentoService
     {
-        Task<IEnumerable<Apartamento>> GetAllAsync();
-        Task<Apartamento?> GetByIdAsync(Guid id);
-        Task<Apartamento> CreateAsync(Apartamento apt);
-        Task UpdateAsync(Apartamento apt);
-        Task DeleteAsync(Guid id);
+        Task<IEnumerable<Apartamento>> GetAllAsync(CancellationToken ct = default);
+        Task<Apartamento?> GetByIdAsync(Guid id, CancellationToken ct = default);
+        Task<Apartamento> CreateAsync(Apartamento apt, CancellationToken ct = default);
+        Task UpdateAsync(Apartamento apt, CancellationToken ct = default);
+        Task DeleteAsync(Guid id, CancellationToken ct = default);
     }
 }

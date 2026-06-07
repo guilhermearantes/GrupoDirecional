@@ -9,40 +9,33 @@ namespace DesafioTecnico.Infrastructure.Repositories
     {
         private readonly AppDbContext _context;
 
-        public VendaRepository(AppDbContext context)
+        public VendaRepository(AppDbContext context) => _context = context;
+
+        public Task<IEnumerable<Venda>> GetAllAsync(CancellationToken ct = default)
+            => _context.Vendas.AsNoTracking().ToListAsync(ct).ContinueWith(t => (IEnumerable<Venda>)t.Result, ct);
+
+        public Task<Venda?> GetByIdAsync(Guid id, CancellationToken ct = default)
+            => _context.Vendas.FindAsync(new object[] { id }, ct).AsTask();
+
+        public async Task AddAsync(Venda venda, CancellationToken ct = default)
         {
-            _context = context;
+            await _context.Vendas.AddAsync(venda, ct);
+            await _context.SaveChangesAsync(ct);
         }
 
-        public async Task<IEnumerable<Venda>> GetAllAsync()
-        {
-            return await _context.Vendas.AsNoTracking().ToListAsync();
-        }
-
-        public async Task<Venda?> GetByIdAsync(Guid id)
-        {
-            return await _context.Vendas.FindAsync(id);
-        }
-
-        public async Task AddAsync(Venda venda)
-        {
-            await _context.Vendas.AddAsync(venda);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task UpdateAsync(Venda venda)
+        public async Task UpdateAsync(Venda venda, CancellationToken ct = default)
         {
             _context.Vendas.Update(venda);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(ct);
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task DeleteAsync(Guid id, CancellationToken ct = default)
         {
-            var entity = await _context.Vendas.FindAsync(id);
+            var entity = await _context.Vendas.FindAsync(new object[] { id }, ct);
             if (entity != null)
             {
                 _context.Vendas.Remove(entity);
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(ct);
             }
         }
     }

@@ -1,7 +1,6 @@
 using Moq;
 using AutoMapper;
 using DesafioTecnico.Api.Controllers;
-using DesafioTecnico.Infrastructure.Repositories.Interfaces;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
 using DesafioTecnico.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -25,10 +24,9 @@ namespace Tests.Controllers
         public async Task Post_Valid_ReturnsCreated()
         {
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
-            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Cliente>())).Returns(Task.CompletedTask).Verifiable();
+            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask).Verifiable();
 
             var controller = new ClientesController(_serviceMock.Object, _mapper);
-
             var dto = new DesafioTecnico.Api.DTOs.ClienteCreateDto { Nome = cliente.Nome, Email = cliente.Email, Cpf = cliente.Cpf, DataNascimento = cliente.DataNascimento };
 
             var result = await controller.Post(dto) as CreatedAtActionResult;
@@ -40,7 +38,7 @@ namespace Tests.Controllers
         [Fact]
         public async Task GetById_NotFound_ReturnsNotFound()
         {
-            _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Cliente?)null);
+            _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Cliente?)null);
             var controller = new ClientesController(_serviceMock.Object, _mapper);
 
             var res = await controller.Get(Guid.NewGuid());
@@ -51,7 +49,7 @@ namespace Tests.Controllers
         [Fact]
         public async Task Put_NotFound_ReturnsNotFound()
         {
-            _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Cliente?)null);
+            _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Cliente?)null);
             var controller = new ClientesController(_serviceMock.Object, _mapper);
 
             var dto = new DesafioTecnico.Api.DTOs.ClienteUpdateDto { Nome = "x", Email = "a@b.com", Cpf = "123", DataNascimento = DateTime.UtcNow.AddYears(-30) };
@@ -64,8 +62,8 @@ namespace Tests.Controllers
         public async Task Put_Existing_ReturnsNoContent()
         {
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
-            _serviceMock.Setup(s => s.GetByIdAsync(cliente.Id)).ReturnsAsync(cliente);
-            _serviceMock.Setup(s => s.UpdateAsync(It.IsAny<Cliente>())).Returns(Task.CompletedTask).Verifiable();
+            _serviceMock.Setup(s => s.GetByIdAsync(cliente.Id, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+            _serviceMock.Setup(s => s.UpdateAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask).Verifiable();
 
             var controller = new ClientesController(_serviceMock.Object, _mapper);
             var dto = new DesafioTecnico.Api.DTOs.ClienteUpdateDto { Nome = cliente.Nome, Email = cliente.Email, Cpf = cliente.Cpf, DataNascimento = cliente.DataNascimento };
@@ -73,7 +71,7 @@ namespace Tests.Controllers
             var res = await controller.Put(cliente.Id, dto);
 
             Assert.IsType<NoContentResult>(res);
-            _serviceMock.Verify(s => s.UpdateAsync(It.IsAny<Cliente>()), Times.Once);
+            _serviceMock.Verify(s => s.UpdateAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }

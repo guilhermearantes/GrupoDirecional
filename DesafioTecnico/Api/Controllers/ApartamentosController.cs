@@ -27,9 +27,10 @@ namespace DesafioTecnico.Api.Controllers
         public async Task<ActionResult<PagedResult<ApartamentoReadDto>>> Get(
             [FromQuery] string? status = null,
             [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20)
+            [FromQuery] int pageSize = 20,
+            CancellationToken ct = default)
         {
-            var all = await _service.GetAllAsync();
+            var all = await _service.GetAllAsync(ct);
             var filtered = string.IsNullOrEmpty(status) || !Enum.TryParse<DesafioTecnico.Domain.Enums.StatusApartamento>(status, ignoreCase: true, out var statusEnum)
                 ? all
                 : all.Where(a => a.Status == statusEnum);
@@ -41,9 +42,9 @@ namespace DesafioTecnico.Api.Controllers
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(ApartamentoReadDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<ApartamentoReadDto>> Get(Guid id)
+        public async Task<ActionResult<ApartamentoReadDto>> Get(Guid id, CancellationToken ct = default)
         {
-            var item = await _service.GetByIdAsync(id);
+            var item = await _service.GetByIdAsync(id, ct);
             if (item == null) return NotFound();
             return Ok(_mapper.Map<ApartamentoReadDto>(item));
         }
@@ -51,11 +52,11 @@ namespace DesafioTecnico.Api.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(ApartamentoReadDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult> Post([FromBody] ApartamentoCreateDto dto)
+        public async Task<ActionResult> Post([FromBody] ApartamentoCreateDto dto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var entity = _mapper.Map<DesafioTecnico.Domain.Entities.Apartamento>(dto);
-            var created = await _service.CreateAsync(entity);
+            var created = await _service.CreateAsync(entity, ct);
             return CreatedAtAction(nameof(Get), new { id = created.Id }, _mapper.Map<ApartamentoReadDto>(created));
         }
 
@@ -63,25 +64,25 @@ namespace DesafioTecnico.Api.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult> Put(Guid id, [FromBody] ApartamentoUpdateDto dto)
+        public async Task<ActionResult> Put(Guid id, [FromBody] ApartamentoUpdateDto dto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            var existing = await _service.GetByIdAsync(id);
+            var existing = await _service.GetByIdAsync(id, ct);
             if (existing == null) return NotFound();
             var toUpdate = _mapper.Map(dto, existing);
             toUpdate.Id = id;
-            await _service.UpdateAsync(toUpdate);
+            await _service.UpdateAsync(toUpdate, ct);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult> Delete(Guid id)
+        public async Task<ActionResult> Delete(Guid id, CancellationToken ct = default)
         {
-            var existing = await _service.GetByIdAsync(id);
+            var existing = await _service.GetByIdAsync(id, ct);
             if (existing == null) return NotFound();
-            await _service.DeleteAsync(id);
+            await _service.DeleteAsync(id, ct);
             return NoContent();
         }
     }

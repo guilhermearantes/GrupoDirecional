@@ -24,11 +24,11 @@ namespace DesafioTecnico.Api.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct = default)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var result = await _authService.AuthenticateAsync(request.Username, request.Password);
+            var result = await _authService.AuthenticateAsync(request.Username, request.Password, ct);
             if (result == null) return Unauthorized();
 
             return Ok(new LoginResponse { Token = result.Value.Token, ExpiresIn = result.Value.ExpiresInSeconds });

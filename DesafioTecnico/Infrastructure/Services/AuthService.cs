@@ -18,9 +18,9 @@ namespace DesafioTecnico.Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task<(string Token, int ExpiresInSeconds)?> AuthenticateAsync(string username, string password)
+        public async Task<(string Token, int ExpiresInSeconds)?> AuthenticateAsync(string username, string password, CancellationToken ct = default)
         {
-            var user = await _context.Usuarios.FirstOrDefaultAsync(u => u.Username == username);
+            var user = await _context.Usuarios.FirstOrDefaultAsync(u => u.Username == username, ct);
             if (user == null)
             {
                 _logger.LogWarning("Login falhou: usuário '{Username}' não encontrado", username);

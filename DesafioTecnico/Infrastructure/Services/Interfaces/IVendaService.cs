@@ -4,10 +4,10 @@ namespace DesafioTecnico.Infrastructure.Services.Interfaces
 {
     public interface IVendaService
     {
-        Task<IEnumerable<Venda>> GetAllAsync();
-        Task<Venda?> GetByIdAsync(Guid id);
-        Task<Venda> CreateAsync(Venda venda);
-        Task UpdateAsync(Venda venda);
-        Task DeleteAsync(Guid id);
+        Task<IEnumerable<Venda>> GetAllAsync(CancellationToken ct = default);
+        Task<Venda?> GetByIdAsync(Guid id, CancellationToken ct = default);
+        Task<Venda> CreateAsync(Venda venda, CancellationToken ct = default);
+        Task UpdateAsync(Venda venda, CancellationToken ct = default);
+        Task DeleteAsync(Guid id, CancellationToken ct = default);
     }
 }

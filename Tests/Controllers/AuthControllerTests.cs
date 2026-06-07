@@ -12,12 +12,11 @@ namespace Tests.Controllers
         public async Task Login_InvalidCredentials_ReturnsUnauthorized()
         {
             var authMock = new Mock<IAuthService>();
-            authMock.Setup(a => a.AuthenticateAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(((string Token, int ExpiresInSeconds)?)null);
+            authMock.Setup(a => a.AuthenticateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(((string Token, int ExpiresInSeconds)?)null);
 
             var controller = new AuthController(authMock.Object);
-
-            var req = new LoginRequest { Username = "u", Password = "p" };
-            var res = await controller.Login(req) as UnauthorizedResult;
+            var res = await controller.Login(new LoginRequest { Username = "u", Password = "p" }) as UnauthorizedResult;
 
             Assert.NotNull(res);
         }

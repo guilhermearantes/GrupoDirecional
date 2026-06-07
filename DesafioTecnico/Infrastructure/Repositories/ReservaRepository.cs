@@ -9,40 +9,33 @@ namespace DesafioTecnico.Infrastructure.Repositories
     {
         private readonly AppDbContext _context;
 
-        public ReservaRepository(AppDbContext context)
+        public ReservaRepository(AppDbContext context) => _context = context;
+
+        public Task<IEnumerable<Reserva>> GetAllAsync(CancellationToken ct = default)
+            => _context.Reservas.AsNoTracking().ToListAsync(ct).ContinueWith(t => (IEnumerable<Reserva>)t.Result, ct);
+
+        public Task<Reserva?> GetByIdAsync(Guid id, CancellationToken ct = default)
+            => _context.Reservas.FindAsync(new object[] { id }, ct).AsTask();
+
+        public async Task AddAsync(Reserva reserva, CancellationToken ct = default)
         {
-            _context = context;
+            await _context.Reservas.AddAsync(reserva, ct);
+            await _context.SaveChangesAsync(ct);
         }
 
-        public async Task<IEnumerable<Reserva>> GetAllAsync()
-        {
-            return await _context.Reservas.AsNoTracking().ToListAsync();
-        }
-
-        public async Task<Reserva?> GetByIdAsync(Guid id)
-        {
-            return await _context.Reservas.FindAsync(id);
-        }
-
-        public async Task AddAsync(Reserva reserva)
-        {
-            await _context.Reservas.AddAsync(reserva);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task UpdateAsync(Reserva reserva)
+        public async Task UpdateAsync(Reserva reserva, CancellationToken ct = default)
         {
             _context.Reservas.Update(reserva);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(ct);
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task DeleteAsync(Guid id, CancellationToken ct = default)
         {
-            var entity = await _context.Reservas.FindAsync(id);
+            var entity = await _context.Reservas.FindAsync(new object[] { id }, ct);
             if (entity != null)
             {
                 _context.Reservas.Remove(entity);
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(ct);
             }
         }
     }

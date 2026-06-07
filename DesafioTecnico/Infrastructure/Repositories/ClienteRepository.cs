@@ -9,40 +9,33 @@ namespace DesafioTecnico.Infrastructure.Repositories
     {
         private readonly AppDbContext _context;
 
-        public ClienteRepository(AppDbContext context)
+        public ClienteRepository(AppDbContext context) => _context = context;
+
+        public Task<IEnumerable<Cliente>> GetAllAsync(CancellationToken ct = default)
+            => _context.Clientes.AsNoTracking().ToListAsync(ct).ContinueWith(t => (IEnumerable<Cliente>)t.Result, ct);
+
+        public Task<Cliente?> GetByIdAsync(Guid id, CancellationToken ct = default)
+            => _context.Clientes.FindAsync(new object[] { id }, ct).AsTask();
+
+        public async Task AddAsync(Cliente cliente, CancellationToken ct = default)
         {
-            _context = context;
+            await _context.Clientes.AddAsync(cliente, ct);
+            await _context.SaveChangesAsync(ct);
         }
 
-        public async Task<IEnumerable<Cliente>> GetAllAsync()
-        {
-            return await _context.Clientes.AsNoTracking().ToListAsync();
-        }
-
-        public async Task<Cliente?> GetByIdAsync(Guid id)
-        {
-            return await _context.Clientes.FindAsync(id);
-        }
-
-        public async Task AddAsync(Cliente cliente)
-        {
-            await _context.Clientes.AddAsync(cliente);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task UpdateAsync(Cliente cliente)
+        public async Task UpdateAsync(Cliente cliente, CancellationToken ct = default)
         {
             _context.Clientes.Update(cliente);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(ct);
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task DeleteAsync(Guid id, CancellationToken ct = default)
         {
-            var entity = await _context.Clientes.FindAsync(id);
+            var entity = await _context.Clientes.FindAsync(new object[] { id }, ct);
             if (entity != null)
             {
                 _context.Clientes.Remove(entity);
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(ct);
             }
         }
     }

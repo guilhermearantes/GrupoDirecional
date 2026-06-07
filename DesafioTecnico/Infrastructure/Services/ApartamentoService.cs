@@ -8,26 +8,26 @@ namespace DesafioTecnico.Infrastructure.Services
     {
         private readonly IApartamentoRepository _repo;
 
-        public ApartamentoService(IApartamentoRepository repo)
-        {
-            _repo = repo;
-        }
+        public ApartamentoService(IApartamentoRepository repo) => _repo = repo;
 
-        public Task<IEnumerable<Apartamento>> GetAllAsync() => _repo.GetAllAsync();
+        public Task<IEnumerable<Apartamento>> GetAllAsync(CancellationToken ct = default)
+            => _repo.GetAllAsync(ct);
 
-        public Task<Apartamento?> GetByIdAsync(Guid id) => _repo.GetByIdAsync(id);
+        public Task<Apartamento?> GetByIdAsync(Guid id, CancellationToken ct = default)
+            => _repo.GetByIdAsync(id, ct);
 
-        public async Task<Apartamento> CreateAsync(Apartamento apt)
+        public async Task<Apartamento> CreateAsync(Apartamento apt, CancellationToken ct = default)
         {
             apt.Id = Guid.NewGuid();
             apt.Status = Domain.Enums.StatusApartamento.Disponivel;
-            await _repo.AddAsync(apt);
+            await _repo.AddAsync(apt, ct);
             return apt;
         }
 
-        public Task UpdateAsync(Apartamento apt) => _repo.UpdateAsync(apt);
+        public Task UpdateAsync(Apartamento apt, CancellationToken ct = default)
+            => _repo.UpdateAsync(apt, ct);
 
-        public Task DeleteAsync(Guid id) => _repo.DeleteAsync(id);
+        public Task DeleteAsync(Guid id, CancellationToken ct = default)
+            => _repo.DeleteAsync(id, ct);
     }
 }
-

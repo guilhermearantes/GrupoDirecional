@@ -34,7 +34,7 @@ namespace Tests.Controllers
         [Fact]
         public async Task Post_ServiceThrows_ReturnsBadRequest()
         {
-            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<DesafioTecnico.Domain.Entities.Venda>())).ThrowsAsync(new InvalidOperationException("nope"));
+            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Venda>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("nope"));
             var controller = new VendasController(_serviceMock.Object, _mapper);
 
             var dto = new DesafioTecnico.Api.DTOs.VendaCreateDto { ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), ValorPago = 100m };
@@ -47,8 +47,8 @@ namespace Tests.Controllers
         [Fact]
         public async Task Post_Valid_ReturnsCreated()
         {
-            var venda = new DesafioTecnico.Domain.Entities.Venda { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), ValorPago = 100m, DataVenda = DateTime.UtcNow /* UTC */ };
-            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<DesafioTecnico.Domain.Entities.Venda>())).ReturnsAsync(venda);
+            var venda = new Venda { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), ValorPago = 100m, DataVenda = DateTime.UtcNow };
+            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Venda>(), It.IsAny<CancellationToken>())).ReturnsAsync(venda);
 
             var controller = new VendasController(_serviceMock.Object, _mapper);
             var dto = new DesafioTecnico.Api.DTOs.VendaCreateDto { ClienteId = venda.ClienteId, ApartamentoId = venda.ApartamentoId, ValorPago = venda.ValorPago };
@@ -62,7 +62,7 @@ namespace Tests.Controllers
         [Fact]
         public async Task Put_NotFound_ReturnsNotFound()
         {
-            _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((DesafioTecnico.Domain.Entities.Venda?)null);
+            _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Venda?)null);
             var controller = new VendasController(_serviceMock.Object, _mapper);
 
             var dto = new DesafioTecnico.Api.DTOs.VendaUpdateDto { ValorPago = 200m };
@@ -74,9 +74,9 @@ namespace Tests.Controllers
         [Fact]
         public async Task Put_Existing_ReturnsNoContent()
         {
-            var venda = new DesafioTecnico.Domain.Entities.Venda { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), ValorPago = 100m, DataVenda = DateTime.UtcNow };
-            _serviceMock.Setup(s => s.GetByIdAsync(venda.Id)).ReturnsAsync(venda);
-            _serviceMock.Setup(s => s.UpdateAsync(It.IsAny<DesafioTecnico.Domain.Entities.Venda>())).Returns(Task.CompletedTask).Verifiable();
+            var venda = new Venda { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), ValorPago = 100m, DataVenda = DateTime.UtcNow };
+            _serviceMock.Setup(s => s.GetByIdAsync(venda.Id, It.IsAny<CancellationToken>())).ReturnsAsync(venda);
+            _serviceMock.Setup(s => s.UpdateAsync(It.IsAny<Venda>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask).Verifiable();
 
             var controller = new VendasController(_serviceMock.Object, _mapper);
             var dto = new DesafioTecnico.Api.DTOs.VendaUpdateDto { ValorPago = 250m };
@@ -84,13 +84,13 @@ namespace Tests.Controllers
             var res = await controller.Put(venda.Id, dto);
 
             Assert.IsType<NoContentResult>(res);
-            _serviceMock.Verify(s => s.UpdateAsync(It.IsAny<DesafioTecnico.Domain.Entities.Venda>()), Times.Once);
+            _serviceMock.Verify(s => s.UpdateAsync(It.IsAny<Venda>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
         public async Task Put_InvalidModel_ReturnsBadRequest()
         {
-            var venda = new DesafioTecnico.Domain.Entities.Venda { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), ValorPago = 100m, DataVenda = DateTime.UtcNow };
+            var venda = new Venda { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), ValorPago = 100m, DataVenda = DateTime.UtcNow };
             var controller = new VendasController(_serviceMock.Object, _mapper);
             controller.ModelState.AddModelError("ValorPago", "Required");
 

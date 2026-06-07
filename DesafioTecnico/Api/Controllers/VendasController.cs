@@ -24,9 +24,12 @@ namespace DesafioTecnico.Api.Controllers
 
         [HttpGet]
         [ProducesResponseType(typeof(PagedResult<VendaReadDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<PagedResult<VendaReadDto>>> Get([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<PagedResult<VendaReadDto>>> Get(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            CancellationToken ct = default)
         {
-            var all = await _vendaService.GetAllAsync();
+            var all = await _vendaService.GetAllAsync(ct);
             var list = all.ToList();
             var items = list.Skip((page - 1) * pageSize).Take(pageSize);
             return Ok(new PagedResult<VendaReadDto>(_mapper.Map<IEnumerable<VendaReadDto>>(items), page, pageSize, list.Count));
@@ -35,9 +38,9 @@ namespace DesafioTecnico.Api.Controllers
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(VendaReadDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<VendaReadDto>> Get(Guid id)
+        public async Task<ActionResult<VendaReadDto>> Get(Guid id, CancellationToken ct = default)
         {
-            var item = await _vendaService.GetByIdAsync(id);
+            var item = await _vendaService.GetByIdAsync(id, ct);
             if (item == null) return NotFound();
             return Ok(_mapper.Map<VendaReadDto>(item));
         }
@@ -45,14 +48,14 @@ namespace DesafioTecnico.Api.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(VendaReadDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult> Post([FromBody] VendaCreateDto dto)
+        public async Task<ActionResult> Post([FromBody] VendaCreateDto dto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var entity = _mapper.Map<DesafioTecnico.Domain.Entities.Venda>(dto);
             try
             {
-                var created = await _vendaService.CreateAsync(entity);
+                var created = await _vendaService.CreateAsync(entity, ct);
                 return CreatedAtAction(nameof(Get), new { id = created.Id }, _mapper.Map<VendaReadDto>(created));
             }
             catch (InvalidOperationException ex)
@@ -65,14 +68,14 @@ namespace DesafioTecnico.Api.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult> Put(Guid id, [FromBody] VendaUpdateDto dto)
+        public async Task<ActionResult> Put(Guid id, [FromBody] VendaUpdateDto dto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            var existing = await _vendaService.GetByIdAsync(id);
+            var existing = await _vendaService.GetByIdAsync(id, ct);
             if (existing == null) return NotFound();
             var toUpdate = _mapper.Map(dto, existing);
             toUpdate.Id = id;
-            await _vendaService.UpdateAsync(toUpdate);
+            await _vendaService.UpdateAsync(toUpdate, ct);
             return NoContent();
         }
 
@@ -86,11 +89,11 @@ namespace DesafioTecnico.Api.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult> Delete(Guid id)
+        public async Task<ActionResult> Delete(Guid id, CancellationToken ct = default)
         {
-            var existing = await _vendaService.GetByIdAsync(id);
+            var existing = await _vendaService.GetByIdAsync(id, ct);
             if (existing == null) return NotFound();
-            await _vendaService.DeleteAsync(id);
+            await _vendaService.DeleteAsync(id, ct);
             return NoContent();
         }
         */

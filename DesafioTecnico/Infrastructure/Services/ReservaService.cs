@@ -23,31 +23,33 @@ namespace DesafioTecnico.Infrastructure.Services
             _logger = logger;
         }
 
-        public Task<IEnumerable<Reserva>> GetAllAsync() => _reservaRepo.GetAllAsync();
+        public Task<IEnumerable<Reserva>> GetAllAsync(CancellationToken ct = default)
+            => _reservaRepo.GetAllAsync(ct);
 
-        public Task<Reserva?> GetByIdAsync(Guid id) => _reservaRepo.GetByIdAsync(id);
+        public Task<Reserva?> GetByIdAsync(Guid id, CancellationToken ct = default)
+            => _reservaRepo.GetByIdAsync(id, ct);
 
-        public async Task<Reserva> CreateAsync(Reserva reserva)
+        public async Task<Reserva> CreateAsync(Reserva reserva, CancellationToken ct = default)
         {
-            var apt = await _apartRepo.GetByIdAsync(reserva.ApartamentoId);
+            var apt = await _apartRepo.GetByIdAsync(reserva.ApartamentoId, ct);
             if (apt == null) throw new InvalidOperationException("Apartamento não encontrado.");
 
             apt.Reservar();
             reserva.Iniciar();
 
-            await _reservaRepo.AddAsync(reserva);
-            await _apartRepo.UpdateAsync(apt);
+            await _reservaRepo.AddAsync(reserva, ct);
+            await _apartRepo.UpdateAsync(apt, ct);
 
             _logger.LogInformation("Reserva {ReservaId} criada para apartamento {ApartamentoId}", reserva.Id, reserva.ApartamentoId);
             return reserva;
         }
 
-        public async Task ConfirmAsync(Guid id)
+        public async Task ConfirmAsync(Guid id, CancellationToken ct = default)
         {
-            var reserva = await _reservaRepo.GetByIdAsync(id);
+            var reserva = await _reservaRepo.GetByIdAsync(id, ct);
             if (reserva == null) throw new InvalidOperationException("Reserva não encontrada.");
 
-            var apt = await _apartRepo.GetByIdAsync(reserva.ApartamentoId);
+            var apt = await _apartRepo.GetByIdAsync(reserva.ApartamentoId, ct);
 
             reserva.Confirmar();
             apt?.Vender();
@@ -64,48 +66,50 @@ namespace DesafioTecnico.Infrastructure.Services
             var provider = _context.Database.ProviderName;
             if (provider != "Microsoft.EntityFrameworkCore.InMemory")
             {
-                using var trx = await _context.Database.BeginTransactionAsync();
+                using var trx = await _context.Database.BeginTransactionAsync(ct);
                 try
                 {
-                    await _vendaRepo.AddAsync(venda);
-                    if (apt != null) await _apartRepo.UpdateAsync(apt);
-                    await _reservaRepo.UpdateAsync(reserva);
-                    await trx.CommitAsync();
+                    await _vendaRepo.AddAsync(venda, ct);
+                    if (apt != null) await _apartRepo.UpdateAsync(apt, ct);
+                    await _reservaRepo.UpdateAsync(reserva, ct);
+                    await trx.CommitAsync(ct);
                 }
                 catch
                 {
-                    await trx.RollbackAsync();
+                    await trx.RollbackAsync(ct);
                     throw;
                 }
             }
             else
             {
-                await _vendaRepo.AddAsync(venda);
-                if (apt != null) await _apartRepo.UpdateAsync(apt);
-                await _reservaRepo.UpdateAsync(reserva);
+                await _vendaRepo.AddAsync(venda, ct);
+                if (apt != null) await _apartRepo.UpdateAsync(apt, ct);
+                await _reservaRepo.UpdateAsync(reserva, ct);
             }
 
             _logger.LogInformation("Reserva {ReservaId} confirmada — Venda {VendaId} gerada", id, venda.Id);
         }
 
-        public async Task CancelAsync(Guid id)
+        public async Task CancelAsync(Guid id, CancellationToken ct = default)
         {
-            var reserva = await _reservaRepo.GetByIdAsync(id);
+            var reserva = await _reservaRepo.GetByIdAsync(id, ct);
             if (reserva == null) throw new InvalidOperationException("Reserva não encontrada.");
 
-            var apt = await _apartRepo.GetByIdAsync(reserva.ApartamentoId);
+            var apt = await _apartRepo.GetByIdAsync(reserva.ApartamentoId, ct);
 
             reserva.Cancelar();
             apt?.Liberar();
 
-            await _reservaRepo.UpdateAsync(reserva);
-            if (apt != null) await _apartRepo.UpdateAsync(apt);
+            await _reservaRepo.UpdateAsync(reserva, ct);
+            if (apt != null) await _apartRepo.UpdateAsync(apt, ct);
 
             _logger.LogInformation("Reserva {ReservaId} cancelada", id);
         }
 
-        public Task UpdateAsync(Reserva reserva) => _reservaRepo.UpdateAsync(reserva);
+        public Task UpdateAsync(Reserva reserva, CancellationToken ct = default)
+            => _reservaRepo.UpdateAsync(reserva, ct);
 
-        public Task DeleteAsync(Guid id) => _reservaRepo.DeleteAsync(id);
+        public Task DeleteAsync(Guid id, CancellationToken ct = default)
+            => _reservaRepo.DeleteAsync(id, ct);
     }
 }

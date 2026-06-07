@@ -25,8 +25,7 @@ namespace Tests.Controllers
             var controller = new ReservasController(_serviceMock.Object, _mapper);
             controller.ModelState.AddModelError("ClienteId", "Required");
 
-            var dto = new DesafioTecnico.Api.DTOs.ReservaCreateDto();
-            var result = await controller.Post(dto);
+            var result = await controller.Post(new DesafioTecnico.Api.DTOs.ReservaCreateDto());
 
             Assert.IsType<BadRequestObjectResult>(result);
         }
@@ -35,7 +34,7 @@ namespace Tests.Controllers
         public async Task Post_Valid_ReturnsCreated()
         {
             var reserva = new Reserva { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), DataReserva = DateTime.UtcNow, Status = DesafioTecnico.Domain.Enums.StatusReserva.Pendente };
-            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Reserva>())).ReturnsAsync(reserva);
+            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Reserva>(), It.IsAny<CancellationToken>())).ReturnsAsync(reserva);
 
             var controller = new ReservasController(_serviceMock.Object, _mapper);
             var dto = new DesafioTecnico.Api.DTOs.ReservaCreateDto { ClienteId = reserva.ClienteId, ApartamentoId = reserva.ApartamentoId };
@@ -49,7 +48,7 @@ namespace Tests.Controllers
         [Fact]
         public async Task GetById_NotFound_ReturnsNotFound()
         {
-            _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Reserva?)null);
+            _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Reserva?)null);
             var controller = new ReservasController(_serviceMock.Object, _mapper);
 
             var res = await controller.Get(Guid.NewGuid());
@@ -59,7 +58,7 @@ namespace Tests.Controllers
         [Fact]
         public async Task Confirm_ServiceThrows_ReturnsBadRequest()
         {
-            _serviceMock.Setup(s => s.ConfirmAsync(It.IsAny<Guid>())).ThrowsAsync(new InvalidOperationException("cannot confirm"));
+            _serviceMock.Setup(s => s.ConfirmAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("cannot confirm"));
             var controller = new ReservasController(_serviceMock.Object, _mapper);
 
             var res = await controller.Confirm(Guid.NewGuid()) as BadRequestObjectResult;
@@ -71,7 +70,7 @@ namespace Tests.Controllers
         [Fact]
         public async Task Confirm_Succeeds_ReturnsNoContent()
         {
-            _serviceMock.Setup(s => s.ConfirmAsync(It.IsAny<Guid>())).Returns(Task.CompletedTask);
+            _serviceMock.Setup(s => s.ConfirmAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
             var controller = new ReservasController(_serviceMock.Object, _mapper);
 
             var res = await controller.Confirm(Guid.NewGuid());
@@ -81,7 +80,7 @@ namespace Tests.Controllers
         [Fact]
         public async Task Delete_NotFound_ReturnsNotFound()
         {
-            _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Reserva?)null);
+            _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Reserva?)null);
             var controller = new ReservasController(_serviceMock.Object, _mapper);
 
             var res = await controller.Delete(Guid.NewGuid());
@@ -92,11 +91,10 @@ namespace Tests.Controllers
         public async Task Delete_Existing_ReturnsNoContent()
         {
             var reserva = new Reserva { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid() };
-            _serviceMock.Setup(s => s.GetByIdAsync(reserva.Id)).ReturnsAsync(reserva);
-            _serviceMock.Setup(s => s.DeleteAsync(reserva.Id)).Returns(Task.CompletedTask).Verifiable();
+            _serviceMock.Setup(s => s.GetByIdAsync(reserva.Id, It.IsAny<CancellationToken>())).ReturnsAsync(reserva);
+            _serviceMock.Setup(s => s.DeleteAsync(reserva.Id, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask).Verifiable();
 
             var controller = new ReservasController(_serviceMock.Object, _mapper);
-
             var res = await controller.Delete(reserva.Id);
 
             Assert.IsType<NoContentResult>(res);

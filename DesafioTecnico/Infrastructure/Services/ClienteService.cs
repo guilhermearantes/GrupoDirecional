@@ -8,23 +8,24 @@ namespace DesafioTecnico.Infrastructure.Services
     {
         private readonly IClienteRepository _repository;
 
-        public ClienteService(IClienteRepository repository)
-        {
-            _repository = repository;
-        }
+        public ClienteService(IClienteRepository repository) => _repository = repository;
 
-        public Task<IEnumerable<Cliente>> GetAllAsync() => _repository.GetAllAsync();
+        public Task<IEnumerable<Cliente>> GetAllAsync(CancellationToken ct = default)
+            => _repository.GetAllAsync(ct);
 
-        public Task<Cliente?> GetByIdAsync(Guid id) => _repository.GetByIdAsync(id);
+        public Task<Cliente?> GetByIdAsync(Guid id, CancellationToken ct = default)
+            => _repository.GetByIdAsync(id, ct);
 
-        public async Task CreateAsync(Cliente cliente)
+        public async Task CreateAsync(Cliente cliente, CancellationToken ct = default)
         {
             cliente.Id = Guid.NewGuid();
-            await _repository.AddAsync(cliente);
+            await _repository.AddAsync(cliente, ct);
         }
 
-        public Task UpdateAsync(Cliente cliente) => _repository.UpdateAsync(cliente);
+        public Task UpdateAsync(Cliente cliente, CancellationToken ct = default)
+            => _repository.UpdateAsync(cliente, ct);
 
-        public Task DeleteAsync(Guid id) => _repository.DeleteAsync(id);
+        public Task DeleteAsync(Guid id, CancellationToken ct = default)
+            => _repository.DeleteAsync(id, ct);
     }
 }

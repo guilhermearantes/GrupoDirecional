@@ -18,16 +18,17 @@ namespace DesafioTecnico.Infrastructure.Services
             _apartRepo = apartRepo;
         }
 
-        public Task<IEnumerable<Venda>> GetAllAsync() => _vendaRepo.GetAllAsync();
+        public Task<IEnumerable<Venda>> GetAllAsync(CancellationToken ct = default)
+            => _vendaRepo.GetAllAsync(ct);
 
-        public Task<Venda?> GetByIdAsync(Guid id) => _vendaRepo.GetByIdAsync(id);
+        public Task<Venda?> GetByIdAsync(Guid id, CancellationToken ct = default)
+            => _vendaRepo.GetByIdAsync(id, ct);
 
-        public async Task<Venda> CreateAsync(Venda venda)
+        public async Task<Venda> CreateAsync(Venda venda, CancellationToken ct = default)
         {
-            var apt = await _apartRepo.GetByIdAsync(venda.ApartamentoId)
+            var apt = await _apartRepo.GetByIdAsync(venda.ApartamentoId, ct)
                 ?? throw new InvalidOperationException("Apartamento não encontrado.");
 
-            // Lança InvalidOperationException se não estiver Disponivel
             apt.VenderDiretamente();
 
             venda.Id = Guid.NewGuid();
@@ -36,30 +37,32 @@ namespace DesafioTecnico.Infrastructure.Services
             var provider = _context.Database.ProviderName;
             if (provider != "Microsoft.EntityFrameworkCore.InMemory")
             {
-                using var trx = await _context.Database.BeginTransactionAsync();
+                using var trx = await _context.Database.BeginTransactionAsync(ct);
                 try
                 {
-                    await _vendaRepo.AddAsync(venda);
-                    await _apartRepo.UpdateAsync(apt);
-                    await trx.CommitAsync();
+                    await _vendaRepo.AddAsync(venda, ct);
+                    await _apartRepo.UpdateAsync(apt, ct);
+                    await trx.CommitAsync(ct);
                     return venda;
                 }
                 catch
                 {
-                    await trx.RollbackAsync();
+                    await trx.RollbackAsync(ct);
                     throw;
                 }
             }
             else
             {
-                await _vendaRepo.AddAsync(venda);
-                await _apartRepo.UpdateAsync(apt);
+                await _vendaRepo.AddAsync(venda, ct);
+                await _apartRepo.UpdateAsync(apt, ct);
                 return venda;
             }
         }
 
-        public Task UpdateAsync(Venda venda) => _vendaRepo.UpdateAsync(venda);
+        public Task UpdateAsync(Venda venda, CancellationToken ct = default)
+            => _vendaRepo.UpdateAsync(venda, ct);
 
-        public Task DeleteAsync(Guid id) => _vendaRepo.DeleteAsync(id);
+        public Task DeleteAsync(Guid id, CancellationToken ct = default)
+            => _vendaRepo.DeleteAsync(id, ct);
     }
 }
