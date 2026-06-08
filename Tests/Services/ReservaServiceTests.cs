@@ -45,14 +45,16 @@ namespace Tests.Services
             context.Dispose();
         }
 
-        [Fact]
-        public async Task Criar_DeveRetornarFalha_QuandoApartamentoNaoDisponivel()
+        [Theory]
+        [InlineData(DesafioTecnico.Domain.Enums.StatusApartamento.Reservado)]
+        [InlineData(DesafioTecnico.Domain.Enums.StatusApartamento.Vendido)]
+        public async Task Criar_DeveRetornarFalha_QuandoApartamentoNaoDisponivel(DesafioTecnico.Domain.Enums.StatusApartamento status)
         {
-            var (context, _, service) = BuildSut("TestDb_CreateReserva_NotAvailable");
+            var (context, _, service) = BuildSut($"TestDb_CreateReserva_NotAvailable_{status}");
 
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
-            apt.Status = DesafioTecnico.Domain.Enums.StatusApartamento.Vendido;
+            apt.Status = status;
             context.Clientes.Add(cliente);
             context.Apartamentos.Add(apt);
             context.SaveChanges();
@@ -82,10 +84,12 @@ namespace Tests.Services
             context.Dispose();
         }
 
-        [Fact]
-        public async Task Confirmar_DeveRetornarFalha_QuandoReservaJaConfirmada()
+        [Theory]
+        [InlineData(DesafioTecnico.Domain.Enums.StatusReserva.Confirmada)]
+        [InlineData(DesafioTecnico.Domain.Enums.StatusReserva.Cancelada)]
+        public async Task Confirmar_DeveRetornarFalha_QuandoReservaNaoPendente(DesafioTecnico.Domain.Enums.StatusReserva status)
         {
-            var (context, _, service) = BuildSut("TestDb_ConfirmReserva_NotPending");
+            var (context, _, service) = BuildSut($"TestDb_ConfirmReserva_NotPending_{status}");
 
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
@@ -98,7 +102,7 @@ namespace Tests.Services
                 ClienteId = cliente.Id,
                 ApartamentoId = apt.Id,
                 DataReserva = DateTime.UtcNow,
-                Status = DesafioTecnico.Domain.Enums.StatusReserva.Confirmada
+                Status = status
             };
             context.Reservas.Add(reserva);
             context.SaveChanges();
@@ -110,10 +114,12 @@ namespace Tests.Services
             context.Dispose();
         }
 
-        [Fact]
-        public async Task Cancelar_DeveRetornarFalha_QuandoReservaJaConfirmada()
+        [Theory]
+        [InlineData(DesafioTecnico.Domain.Enums.StatusReserva.Confirmada)]
+        [InlineData(DesafioTecnico.Domain.Enums.StatusReserva.Cancelada)]
+        public async Task Cancelar_DeveRetornarFalha_QuandoReservaNaoPendente(DesafioTecnico.Domain.Enums.StatusReserva status)
         {
-            var (context, _, service) = BuildSut("TestDb_CancelReserva_NotPending");
+            var (context, _, service) = BuildSut($"TestDb_CancelReserva_NotPending_{status}");
 
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
@@ -126,7 +132,7 @@ namespace Tests.Services
                 ClienteId = cliente.Id,
                 ApartamentoId = apt.Id,
                 DataReserva = DateTime.UtcNow,
-                Status = DesafioTecnico.Domain.Enums.StatusReserva.Confirmada
+                Status = status
             };
             context.Reservas.Add(reserva);
             context.SaveChanges();

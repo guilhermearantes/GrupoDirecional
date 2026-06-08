@@ -19,9 +19,9 @@ namespace Tests.Services
             var config = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string?>
                 {
-                    ["Jwt:Key"]          = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
-                    ["Jwt:Issuer"]       = "tests",
-                    ["Jwt:Audience"]     = "tests",
+                    ["Jwt:Key"]           = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
+                    ["Jwt:Issuer"]        = "tests",
+                    ["Jwt:Audience"]      = "tests",
                     ["Jwt:ExpiryMinutes"] = "60"
                 })
                 .Build();
@@ -49,10 +49,13 @@ namespace Tests.Services
             Assert.False(string.IsNullOrEmpty(result!.Value.Token));
         }
 
-        [Fact]
-        public async Task Autenticar_DeveRetornarNull_QuandoSenhaInvalida()
+        [Theory]
+        [InlineData("admin",       "wrongpassword")] // usuário existe, senha errada
+        [InlineData("nonexistent", "secret")]        // usuário não encontrado
+        public async Task Autenticar_DeveRetornarNull_QuandoCredenciaisInvalidas(string username, string password)
         {
-            var service = BuildSut("TestAuthDb_InvalidPassword", out var context);
+            var service = BuildSut($"TestAuthDb_Invalid_{username}", out var context);
+            // Sempre semeia o usuário "admin"; o caso "nonexistent" simplesmente não o encontrará
             context.Usuarios.Add(new DesafioTecnico.Domain.Entities.Usuario
             {
                 Id = Guid.NewGuid(),
@@ -62,17 +65,7 @@ namespace Tests.Services
             });
             context.SaveChanges();
 
-            var result = await service.AuthenticateAsync("admin", "wrongpassword");
-
-            Assert.Null(result);
-        }
-
-        [Fact]
-        public async Task Autenticar_DeveRetornarNull_QuandoUsuarioNaoEncontrado()
-        {
-            var service = BuildSut("TestAuthDb_NoUser", out _);
-
-            var result = await service.AuthenticateAsync("nonexistent", "secret");
+            var result = await service.AuthenticateAsync(username, password);
 
             Assert.Null(result);
         }
