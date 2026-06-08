@@ -64,8 +64,7 @@ namespace DesafioTecnico.Api.Controllers
         /// <remarks>Código é único — retorna 409 se já existir no sistema.</remarks>
         [HttpPost]
         [ProducesResponseType(typeof(ApartamentoReadDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
         public async Task<ActionResult> Post([FromBody] ApartamentoCreateDto dto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -77,7 +76,7 @@ namespace DesafioTecnico.Api.Controllers
             }
             catch (DbUpdateException)
             {
-                return Conflict(new { error = "Código de apartamento já cadastrado." });
+                return Conflict(new ErrorResponse("Código de apartamento já cadastrado."));
             }
             return CreatedAtAction(nameof(Get), new { id = created.Id }, _mapper.Map<ApartamentoReadDto>(created));
         }
@@ -86,9 +85,8 @@ namespace DesafioTecnico.Api.Controllers
         /// <remarks>Retorna 409 se o novo código já pertencer a outro apartamento.</remarks>
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
         public async Task<ActionResult> Put(Guid id, [FromBody] ApartamentoUpdateDto dto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -101,7 +99,7 @@ namespace DesafioTecnico.Api.Controllers
             }
             catch (DbUpdateException)
             {
-                return Conflict(new { error = "Código de apartamento já cadastrado." });
+                return Conflict(new ErrorResponse("Código de apartamento já cadastrado."));
             }
             return NoContent();
         }

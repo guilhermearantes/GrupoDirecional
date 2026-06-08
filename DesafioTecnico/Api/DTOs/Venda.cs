@@ -25,11 +25,13 @@ namespace DesafioTecnico.Api.DTOs
     public class VendaCreateDto
     {
         /// <summary>Identificador do cliente comprador.</summary>
+        /// <example>3fa85f64-5717-4562-b3fc-2c963f66afa6</example>
         [Required]
         [NotEmptyGuid]
         public Guid ClienteId { get; set; }
 
         /// <summary>Identificador do apartamento. Deve estar com status <c>Disponivel</c> para venda direta.</summary>
+        /// <example>7c9e6679-7425-40de-944b-e07fc1f90ae7</example>
         [Required]
         [NotEmptyGuid]
         public Guid ApartamentoId { get; set; }

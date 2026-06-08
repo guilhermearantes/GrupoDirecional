@@ -57,13 +57,13 @@ namespace DesafioTecnico.Api.Controllers
         /// <remarks>Altera o status do apartamento para <c>Vendido</c>. Retorna 400 se o apartamento não estiver com status <c>Disponivel</c>.</remarks>
         [HttpPost]
         [ProducesResponseType(typeof(VendaReadDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> Post([FromBody] VendaCreateDto dto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var entity = _mapper.Map<Venda>(dto);
             var result = await _vendaService.CreateAsync(entity, ct);
-            if (result.IsFailure) return BadRequest(new { error = result.Error });
+            if (result.IsFailure) return BadRequest(new ErrorResponse(result.Error));
             return CreatedAtAction(nameof(Get), new { id = result.Value.Id }, _mapper.Map<VendaReadDto>(result.Value));
         }
 
@@ -86,13 +86,13 @@ namespace DesafioTecnico.Api.Controllers
         /// <remarks>Em produção, prefira marcar a venda como estornada em vez de removê-la — vendas são registros contábeis. Disponível aqui por requisito do desafio.</remarks>
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Delete(Guid id, CancellationToken ct = default)
         {
             var result = await _vendaService.DeleteAsync(id, ct);
-            if (result.IsNotFound) return NotFound(new { error = result.Error });
-            return result.IsSuccess ? NoContent() : BadRequest(new { error = result.Error });
+            if (result.IsNotFound) return NotFound(new ErrorResponse(result.Error));
+            return result.IsSuccess ? NoContent() : BadRequest(new ErrorResponse(result.Error));
         }
     }
 }

@@ -57,8 +57,7 @@ namespace DesafioTecnico.Api.Controllers
         /// <remarks>E-mail e CPF são únicos — retorna 409 se já existirem no sistema.</remarks>
         [HttpPost]
         [ProducesResponseType(typeof(ClienteReadDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
         public async Task<ActionResult> Post([FromBody] ClienteCreateDto dto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -70,7 +69,7 @@ namespace DesafioTecnico.Api.Controllers
             }
             catch (DbUpdateException)
             {
-                return Conflict(new { error = "Email ou CPF já cadastrado." });
+                return Conflict(new ErrorResponse("Email ou CPF já cadastrado."));
             }
             return CreatedAtAction(nameof(Get), new { id = created.Id }, _mapper.Map<ClienteReadDto>(created));
         }
@@ -79,9 +78,8 @@ namespace DesafioTecnico.Api.Controllers
         /// <remarks>Retorna 409 se o novo e-mail ou CPF já pertencerem a outro cliente.</remarks>
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
         public async Task<ActionResult> Put(Guid id, [FromBody] ClienteUpdateDto dto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -94,7 +92,7 @@ namespace DesafioTecnico.Api.Controllers
             }
             catch (DbUpdateException)
             {
-                return Conflict(new { error = "Email ou CPF já cadastrado." });
+                return Conflict(new ErrorResponse("Email ou CPF já cadastrado."));
             }
             return NoContent();
         }
@@ -104,7 +102,7 @@ namespace DesafioTecnico.Api.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
         public async Task<ActionResult> Delete(Guid id, CancellationToken ct = default)
         {
             var existing = await _service.GetByIdAsync(id, ct);
@@ -115,7 +113,7 @@ namespace DesafioTecnico.Api.Controllers
             }
             catch (DbUpdateException)
             {
-                return Conflict(new { error = "Não é possível excluir um cliente com reservas ou vendas associadas." });
+                return Conflict(new ErrorResponse("Não é possível excluir um cliente com reservas ou vendas associadas."));
             }
             return NoContent();
         }
