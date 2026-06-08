@@ -1,4 +1,5 @@
 using DesafioTecnico.Domain.Entities;
+using DesafioTecnico.Domain.Factories;
 using DesafioTecnico.Domain.Results;
 using DesafioTecnico.Infrastructure.Data;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
@@ -54,14 +55,7 @@ namespace DesafioTecnico.Infrastructure.Services
             var vender = apt.Vender();
             if (vender.IsFailure) return vender;
 
-            var venda = new Venda
-            {
-                Id = Guid.NewGuid(),
-                ClienteId = reserva.ClienteId,
-                ApartamentoId = reserva.ApartamentoId,
-                DataVenda = DateTime.UtcNow,
-                ValorPago = apt.Valor
-            };
+            var venda = VendaFactory.CriarPorReserva(reserva, apt);
 
             await _uow.Vendas.AddAsync(venda, ct);
             await _uow.Apartamentos.UpdateAsync(apt, ct);

@@ -1,4 +1,5 @@
 using DesafioTecnico.Domain.Entities;
+using DesafioTecnico.Domain.Factories;
 using DesafioTecnico.Domain.Results;
 using DesafioTecnico.Infrastructure.Data;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
@@ -31,15 +32,14 @@ namespace DesafioTecnico.Infrastructure.Services
             var vender = apt.VenderDiretamente();
             if (vender.IsFailure) return Result.Fail<Venda>(vender.Error);
 
-            venda.Id = Guid.NewGuid();
-            venda.DataVenda = DateTime.UtcNow;
+            var novaVenda = VendaFactory.CriarVendaDireta(venda.ClienteId, venda.ApartamentoId, venda.ValorPago);
 
-            await _uow.Vendas.AddAsync(venda, ct);
+            await _uow.Vendas.AddAsync(novaVenda, ct);
             await _uow.Apartamentos.UpdateAsync(apt, ct);
             await _uow.CommitAsync(ct);
 
-            _logger.LogInformation("Venda {VendaId} criada para apartamento {ApartamentoId}", venda.Id, venda.ApartamentoId);
-            return Result.Ok(venda);
+            _logger.LogInformation("Venda {VendaId} criada para apartamento {ApartamentoId}", novaVenda.Id, novaVenda.ApartamentoId);
+            return Result.Ok(novaVenda);
         }
 
         public async Task UpdateAsync(Venda venda, CancellationToken ct = default)
