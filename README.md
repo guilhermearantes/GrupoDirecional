@@ -4,6 +4,24 @@ API REST em .NET 9 para gerenciamento de clientes, apartamentos, reservas e vend
 
 ---
 
+## Stack de tecnologias
+
+| Camada | Tecnologia |
+|---|---|
+| Runtime | .NET 9 |
+| Web framework | ASP.NET Core (minimal hosting) |
+| ORM | Entity Framework Core 9 |
+| Banco — produção | SQL Server 2019 (Docker) |
+| Banco — desenvolvimento | SQLite (criado automaticamente, sem configuração) |
+| Autenticação | JWT Bearer |
+| Hash de senha | BCrypt.Net-Next |
+| Mapeamento | AutoMapper 12 |
+| Documentação interativa | Scalar (OpenAPI 3) |
+| Testes | xUnit · Moq · EF InMemory |
+| Testes de integração | Testcontainers (opcional) |
+
+---
+
 ## Como rodar com Docker
 
 ### Pré-requisitos
@@ -38,6 +56,25 @@ A API já sobe com um usuário `admin` criado (seed automático).
 |----------|------------|
 | Username | `admin`    |
 | Password | `admin123` |
+
+---
+
+## Variáveis de ambiente
+
+Todos os segredos são lidos de variáveis de ambiente — nenhum valor sensível está no código versionado. O arquivo `.env.example` na raiz serve de template; copie-o para `.env` antes de rodar o Docker Compose.
+
+| Variável | Descrição | Default / Observação |
+|---|---|---|
+| `SA_PASSWORD` | Senha SA do SQL Server. Deve atender aos requisitos de complexidade do SQL Server (maiúsculas, números, símbolos). | Obrigatória |
+| `DB_PORT` | Porta do host mapeada para o container do banco. | `14333` |
+| `TEST_DB_PORT` | Porta usada pelos testes de integração. | `14333` |
+| `TEST_DB_SA_PASSWORD` | Senha SA usada nos testes de integração. | Herda `SA_PASSWORD` |
+| `JWT__KEY` | Chave secreta para assinar tokens JWT. Em produção, use no mínimo 32 caracteres aleatórios. | Em `Development` existe um fallback inseguro; **obrigatória em produção**. |
+| `JWT__ISSUER` | Issuer declarado no token. | `DesafioTecnicoApi` |
+| `JWT__AUDIENCE` | Audience declarada no token. | `DesafioTecnicoApiUsers` |
+| `JWT__EXPIRY_MINUTES` | Tempo de vida do token em minutos. | `60` |
+| `ASPNETCORE_ENVIRONMENT` | Define qual `appsettings.{env}.json` é carregado. `Development` habilita o Scalar UI. | `Production` no Docker; `Development` localmente. |
+| `ConnectionStrings__DefaultConnection` | Connection string completa do banco. Se ausente em `Development`, a API usa SQLite automaticamente. | Montada pelo docker-compose a partir de `SA_PASSWORD`. |
 
 ---
 
@@ -99,7 +136,7 @@ Acesse `http://localhost:8080/scalar/v1` para testar todos os endpoints via inte
 | POST   | /api/clientes                 | Cadastrar cliente                            | Sim  |
 | PUT    | /api/clientes/{id}            | Atualizar cliente                            | Sim  |
 | DELETE | /api/clientes/{id}            | Remover cliente                              | Sim  |
-| GET    | /api/apartamentos             | Listar apartamentos (paginado, filtro status)| Sim  |
+| GET    | /api/apartamentos             | Listar apartamentos (paginado; `?status=Disponivel\|Reservado\|Vendido`) | Sim  |
 | GET    | /api/apartamentos/{id}        | Obter apartamento por ID                     | Sim  |
 | POST   | /api/apartamentos             | Cadastrar apartamento                        | Sim  |
 | PUT    | /api/apartamentos/{id}        | Atualizar apartamento                        | Sim  |
@@ -115,6 +152,59 @@ Acesse `http://localhost:8080/scalar/v1` para testar todos os endpoints via inte
 | POST   | /api/vendas                   | Registrar venda direta (→ apartamento Vendido)| Sim  |
 | PUT    | /api/vendas/{id}              | Atualizar valor pago da venda                | Sim  |
 | DELETE | /api/vendas/{id}              | Remover venda                                | Sim  |
+
+---
+
+## Formato das respostas
+
+### Resposta paginada
+
+Todos os endpoints `GET` de listagem retornam o envelope abaixo. `totalPages` é calculado automaticamente.
+
+```json
+{
+  "items": [ "..." ],
+  "page": 1,
+  "pageSize": 20,
+  "totalCount": 47,
+  "totalPages": 3
+}
+```
+
+Parâmetros de query disponíveis em todos os endpoints de listagem:
+
+| Parâmetro | Tipo | Default | Limite |
+|---|---|---|---|
+| `page` | `int` | `1` | Mínimo 1 |
+| `pageSize` | `int` | `20` | 1 – 100 |
+
+O endpoint `GET /api/apartamentos` aceita adicionalmente:
+
+| Parâmetro | Valores aceitos | Exemplo |
+|---|---|---|
+| `status` | `Disponivel` · `Reservado` · `Vendido` | `?status=Disponivel` |
+
+### Resposta de erro de negócio (400)
+
+Erros originados de regras de domínio (ex.: reservar apartamento indisponível) retornam:
+
+```json
+{ "error": "Apartamento não está disponível para reserva." }
+```
+
+Erros inesperados (500) seguem o mesmo formato via `ExceptionMiddleware`.
+
+### Resposta de erro de validação (400)
+
+Quando o modelo enviado não passa nas anotações de validação dos DTOs, o ASP.NET Core retorna o formato padrão `ModelState`:
+
+```json
+{
+  "errors": {
+    "Valor": ["The field Valor must be between 0.01 and 1.7976931348623157E+308."]
+  }
+}
+```
 
 ---
 
