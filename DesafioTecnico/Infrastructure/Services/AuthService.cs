@@ -2,10 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using DesafioTecnico.Infrastructure.Data;
 using DesafioTecnico.Infrastructure.Security;
+using DesafioTecnico.Infrastructure.Services.Interfaces;
 
 namespace DesafioTecnico.Infrastructure.Services
 {
-    public class AuthService : DesafioTecnico.Infrastructure.Services.Interfaces.IAuthService
+    public class AuthService : IAuthService
     {
         private readonly AppDbContext _context;
         private readonly JwtTokenGenerator _tokenGenerator;

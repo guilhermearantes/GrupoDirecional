@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
 using DesafioTecnico.Api.DTOs;
+using DesafioTecnico.Domain.Entities;
+using DesafioTecnico.Domain.Enums;
 
 namespace DesafioTecnico.Api.Controllers
 {
@@ -40,7 +42,7 @@ namespace DesafioTecnico.Api.Controllers
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = 20;
             var all = await _service.GetAllAsync(ct);
-            var filtered = string.IsNullOrEmpty(status) || !Enum.TryParse<DesafioTecnico.Domain.Enums.StatusApartamento>(status, ignoreCase: true, out var statusEnum)
+            var filtered = string.IsNullOrEmpty(status) || !Enum.TryParse<StatusApartamento>(status, ignoreCase: true, out var statusEnum)
                 ? all
                 : all.Where(a => a.Status == statusEnum);
             var list = filtered.ToList();
@@ -66,7 +68,7 @@ namespace DesafioTecnico.Api.Controllers
         public async Task<ActionResult> Post([FromBody] ApartamentoCreateDto dto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            var entity = _mapper.Map<DesafioTecnico.Domain.Entities.Apartamento>(dto);
+            var entity = _mapper.Map<Apartamento>(dto);
             var created = await _service.CreateAsync(entity, ct);
             return CreatedAtAction(nameof(Get), new { id = created.Id }, _mapper.Map<ApartamentoReadDto>(created));
         }
