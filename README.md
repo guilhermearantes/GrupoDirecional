@@ -17,8 +17,8 @@ API REST em .NET 9 para gerenciamento de clientes, apartamentos, reservas e vend
 | Hash de senha | BCrypt.Net-Next |
 | Mapeamento | AutoMapper 16 |
 | Documentação interativa | Scalar (OpenAPI 3) |
-| Testes | xUnit · Moq · EF InMemory |
-| Testes de integração | Testcontainers (opcional) |
+| Testes unitários | xUnit · Moq · EF InMemory — 90 testes, sem dependências externas |
+| Testes de integração | xUnit · WebApplicationFactory · SQL Server real — 4 testes end-to-end |
 
 ---
 
@@ -69,7 +69,7 @@ Todos os segredos são lidos de variáveis de ambiente — nenhum valor sensíve
 | `DB_PORT` | Porta do host mapeada para o container do banco. | `14333` |
 | `TEST_DB_PORT` | Porta usada pelos testes de integração. | `14333` |
 | `TEST_DB_SA_PASSWORD` | Senha SA usada nos testes de integração. | Herda `SA_PASSWORD` |
-| `JWT__KEY` | Chave secreta para assinar tokens JWT. Em produção, use no mínimo 32 caracteres aleatórios. | Em `Development` existe um fallback inseguro; **obrigatória em produção**. |
+| `JWT__KEY` | Chave secreta para assinar tokens JWT. **Mínimo 32 caracteres** (requisito técnico do HS256 — chaves menores causam erro na inicialização). | `appsettings.json` tem um valor de 44 chars para `Development`; **obrigatória em produção**. |
 | `JWT__ISSUER` | Issuer declarado no token. | `DesafioTecnicoApi` |
 | `JWT__AUDIENCE` | Audience declarada no token. | `DesafioTecnicoApiUsers` |
 | `JWT__EXPIRY_MINUTES` | Tempo de vida do token em minutos. | `60` |
@@ -392,7 +392,7 @@ O token expira em 60 minutos (configurável via `Jwt__ExpiryMinutes`). Após exp
 
 ### Testes unitários (sem dependências externas)
 
-Os testes unitários e de serviço usam EF Core InMemory e não precisam de banco, Docker ou qualquer configuração adicional.
+90 testes de controllers e serviços usando EF Core InMemory. Não precisam de banco, Docker ou qualquer configuração adicional.
 
 ```bash
 dotnet test Tests/Tests.csproj --filter "Category!=Integration"
@@ -400,7 +400,16 @@ dotnet test Tests/Tests.csproj --filter "Category!=Integration"
 
 ### Testes de integração (requerem SQL Server)
 
-Os testes de integração sobem a aplicação completa via `WebApplicationFactory` e executam fluxos end-to-end contra um SQL Server real. Há três formas de fornecer o banco:
+4 testes que sobem a aplicação completa via `WebApplicationFactory` contra um SQL Server real:
+
+| Teste | O que valida |
+|---|---|
+| `ConfirmarReserva` | Fluxo completo: cadastrar cliente → reservar → confirmar → verificar venda no banco |
+| `CancelarReserva` | Login via JWT real → reservar → cancelar → verificar status no banco |
+| `VenderDiretamente` | Venda direta sem reserva → apartamento marcado como Vendido |
+| `CriarReserva_ApartamentoVendido` | Tentativa de reservar apartamento já vendido retorna 400 |
+
+Há três formas de fornecer o banco:
 
 ---
 
@@ -495,8 +504,9 @@ DesafioTecnico/
 - **Validação do CPF**: o sistema valida o formato `NNN.NNN.NNN-NN`, mas não os dígitos verificadores do algoritmo da Receita Federal. Em produção, utilizaria uma biblioteca de validação de CPF.
 - **Migrations via job separado no Compose**: o serviço `migrations` aplica o `database update` antes da API subir, seguindo a prática de não aplicar migrations em runtime de produção.
 - **Seed automático no startup**: usuário `admin` e dados de demonstração são inseridos na primeira inicialização, com guards idempotentes (`if (!context.X.Any())`).
-- **Testes com EF InMemory**: testes unitários de serviço não precisam de banco real, rodando em memória para máxima velocidade.
-- **Testcontainers (opcional)**: testes de integração podem subir um SQL Server real via Testcontainers ou reutilizar o container do docker-compose.
+- **Testes unitários com EF InMemory**: testes de serviço não precisam de banco real, rodando em memória para máxima velocidade.
+- **Testes de integração com WebApplicationFactory**: a aplicação sobe em modo `SqlIntegrationTests` — ambiente que seleciona SQL Server como provedor e suprime o SeedData de startup, permitindo que cada teste controle seus próprios dados. O `DbContextOptions<AppDbContext>` é substituído no `ConfigureServices` com a connection string de teste (abordagem obrigatória porque `builder.Configuration.GetConnectionString` em `Program.cs` resolve o valor *antes* de `builder.Build()`, tornando `ConfigureAppConfiguration` insuficiente para sobrescrever o `appsettings.json`). O `TestAuthHandler` é promovido a scheme padrão via `PostConfigure<AuthenticationOptions>` para sobrescrever o `JwtBearer` registrado pelo `Program.cs`.
+- **Testcontainers (opcional)**: testes de integração também podem subir um SQL Server real via Testcontainers ou reutilizar o container do docker-compose.
 
 ### Segurança
 
