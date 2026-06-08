@@ -80,7 +80,10 @@ Todos os segredos são lidos de variáveis de ambiente — nenhum valor sensíve
 
 ## Documentação interativa (Scalar UI)
 
-Acesse `http://localhost:8080/scalar/v1` para explorar e testar todos os endpoints via interface gráfica.
+| Ambiente | URL |
+|---|---|
+| Local (`dotnet run`) | `http://localhost:5160/scalar/v1` |
+| Docker Compose | `http://localhost:8080/scalar/v1` |
 
 > Disponível apenas quando `ASPNETCORE_ENVIRONMENT=Development`. Localmente está sempre ativo; no Docker Compose está desabilitado por padrão (ambiente `Production`). Para habilitar no Docker, adicione `ASPNETCORE_ENVIRONMENT: Development` ao serviço `api` no `docker-compose.yml`.
 
