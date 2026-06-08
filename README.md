@@ -445,6 +445,11 @@ DesafioTecnico/
 - **DTOs + AutoMapper**: entidades de domínio não são expostas diretamente; mapeamentos centralizados no `AutoMapperProfile`.
 - **JWT + BCrypt**: autenticação stateless com tokens assinados; senhas armazenadas com hash BCrypt (work factor configurável).
 - **Transação em `VendaService`**: a criação de venda e a atualização de status do apartamento ocorrem em uma única transação de banco de dados, garantindo consistência.
+- **Exclusão de vendas**: o endpoint `DELETE /api/vendas/{id}` foi incluído por requisito do desafio. Em produção, vendas são registros contábeis — a prática correta é marcar como estornadas (soft delete ou campo de status), nunca remover o registro do banco.
+- **Concorrência em reservas (não implementado no desafio)**: o fluxo de reserva lê o status do apartamento e, em seguida, atualiza — sem locking. Em produção, duas requisições simultâneas poderiam reservar o mesmo apartamento. A solução correta é concorrência otimista via `RowVersion`/`ETag` no `Apartamento`, rejeitando a segunda operação com 409 Conflict.
+- **Preço da venda congelado na reserva (não implementado no desafio)**: ao confirmar uma reserva, o `ValorPago` da venda é calculado com o preço atual do apartamento. Se o valor mudar entre a criação da reserva e sua confirmação, o cliente é cobrado um valor diferente do acordado. O correto seria registrar o valor na `Reserva` e transferi-lo para a `Venda` na confirmação.
+- **Exclusão de clientes com histórico (não implementado no desafio)**: atualmente é possível excluir um cliente que possui vendas ou reservas. Em produção, essa operação deveria ser bloqueada com 409 Conflict enquanto existirem registros vinculados.
+- **Validação do CPF**: o sistema valida o formato `NNN.NNN.NNN-NN`, mas não os dígitos verificadores do algoritmo da Receita Federal. Em produção, utilizaria uma biblioteca de validação de CPF.
 - **Migrations via job separado no Compose**: o serviço `migrations` aplica o `database update` antes da API subir, seguindo a prática de não aplicar migrations em runtime de produção.
 - **Seed automático no startup**: usuário `admin` e dados de demonstração são inseridos na primeira inicialização, com guards idempotentes (`if (!context.X.Any())`).
 - **Testes com EF InMemory**: testes unitários de serviço não precisam de banco real, rodando em memória para máxima velocidade.
