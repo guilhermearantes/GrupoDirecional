@@ -16,10 +16,11 @@ namespace DesafioTecnico.Infrastructure.Services
         public Task<Cliente?> GetByIdAsync(Guid id, CancellationToken ct = default)
             => _repository.GetByIdAsync(id, ct);
 
-        public async Task CreateAsync(Cliente cliente, CancellationToken ct = default)
+        public async Task<Cliente> CreateAsync(Cliente cliente, CancellationToken ct = default)
         {
             cliente.Id = Guid.NewGuid();
             await _repository.AddAsync(cliente, ct);
+            return cliente;
         }
 
         public Task UpdateAsync(Cliente cliente, CancellationToken ct = default)

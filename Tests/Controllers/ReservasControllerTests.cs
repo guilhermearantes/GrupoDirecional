@@ -20,7 +20,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Post_InvalidModel_ReturnsBadRequest()
+        public async Task Criar_DeveRetornarBadRequest_QuandoModeloInvalido()
         {
             var controller = new ReservasController(_serviceMock.Object, _mapper);
             controller.ModelState.AddModelError("ClienteId", "Required");
@@ -31,7 +31,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Post_Valid_ReturnsCreated()
+        public async Task Criar_DeveRetornarCreated_QuandoDadosValidos()
         {
             var reserva = new Reserva { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), DataReserva = DateTime.UtcNow, Status = DesafioTecnico.Domain.Enums.StatusReserva.Pendente };
             _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Reserva>(), It.IsAny<CancellationToken>())).ReturnsAsync(reserva);
@@ -46,7 +46,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task GetById_NotFound_ReturnsNotFound()
+        public async Task ObterPorId_DeveRetornarNotFound_QuandoNaoEncontrado()
         {
             _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Reserva?)null);
             var controller = new ReservasController(_serviceMock.Object, _mapper);
@@ -56,7 +56,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Confirm_ServiceThrows_ReturnsBadRequest()
+        public async Task Confirmar_DeveRetornarBadRequest_QuandoServicoLancaExcecao()
         {
             _serviceMock.Setup(s => s.ConfirmAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("cannot confirm"));
             var controller = new ReservasController(_serviceMock.Object, _mapper);
@@ -64,11 +64,11 @@ namespace Tests.Controllers
             var res = await controller.Confirm(Guid.NewGuid()) as BadRequestObjectResult;
 
             Assert.NotNull(res);
-            Assert.Contains("cannot confirm", res.Value.ToString());
+            Assert.Contains("cannot confirm", res.Value!.ToString());
         }
 
         [Fact]
-        public async Task Confirm_Succeeds_ReturnsNoContent()
+        public async Task Confirmar_DeveRetornarNoContent_QuandoBemSucedido()
         {
             _serviceMock.Setup(s => s.ConfirmAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
             var controller = new ReservasController(_serviceMock.Object, _mapper);
@@ -78,7 +78,29 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Delete_NotFound_ReturnsNotFound()
+        public async Task Cancelar_DeveRetornarBadRequest_QuandoServicoLancaExcecao()
+        {
+            _serviceMock.Setup(s => s.CancelAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("cannot cancel"));
+            var controller = new ReservasController(_serviceMock.Object, _mapper);
+
+            var res = await controller.Cancel(Guid.NewGuid()) as BadRequestObjectResult;
+
+            Assert.NotNull(res);
+            Assert.Contains("cannot cancel", res.Value!.ToString());
+        }
+
+        [Fact]
+        public async Task Cancelar_DeveRetornarNoContent_QuandoBemSucedido()
+        {
+            _serviceMock.Setup(s => s.CancelAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+            var controller = new ReservasController(_serviceMock.Object, _mapper);
+
+            var res = await controller.Cancel(Guid.NewGuid());
+            Assert.IsType<NoContentResult>(res);
+        }
+
+        [Fact]
+        public async Task Excluir_DeveRetornarNotFound_QuandoNaoEncontrado()
         {
             _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Reserva?)null);
             var controller = new ReservasController(_serviceMock.Object, _mapper);
@@ -88,7 +110,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Delete_Existing_ReturnsNoContent()
+        public async Task Excluir_DeveRetornarNoContent_QuandoExiste()
         {
             var reserva = new Reserva { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid() };
             _serviceMock.Setup(s => s.GetByIdAsync(reserva.Id, It.IsAny<CancellationToken>())).ReturnsAsync(reserva);

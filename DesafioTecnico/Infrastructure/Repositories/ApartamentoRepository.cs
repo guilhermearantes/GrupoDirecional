@@ -11,11 +11,11 @@ namespace DesafioTecnico.Infrastructure.Repositories
 
         public ApartamentoRepository(AppDbContext context) => _context = context;
 
-        public Task<IEnumerable<Apartamento>> GetAllAsync(CancellationToken ct = default)
-            => _context.Apartamentos.AsNoTracking().ToListAsync(ct).ContinueWith(t => (IEnumerable<Apartamento>)t.Result, ct);
+        public async Task<IEnumerable<Apartamento>> GetAllAsync(CancellationToken ct = default)
+            => await _context.Apartamentos.AsNoTracking().ToListAsync(ct);
 
         public Task<Apartamento?> GetByIdAsync(Guid id, CancellationToken ct = default)
-            => _context.Apartamentos.FindAsync(new object[] { id }, ct).AsTask();
+            => _context.Apartamentos.FindAsync([id], ct).AsTask();
 
         public async Task AddAsync(Apartamento apt, CancellationToken ct = default)
         {
@@ -31,7 +31,7 @@ namespace DesafioTecnico.Infrastructure.Repositories
 
         public async Task DeleteAsync(Guid id, CancellationToken ct = default)
         {
-            var entity = await _context.Apartamentos.FindAsync(new object[] { id }, ct);
+            var entity = await _context.Apartamentos.FindAsync([id], ct);
             if (entity != null)
             {
                 _context.Apartamentos.Remove(entity);
@@ -39,10 +39,5 @@ namespace DesafioTecnico.Infrastructure.Repositories
             }
         }
 
-        public async Task<bool> IsAvailableAsync(Guid apartamentoId, CancellationToken ct = default)
-        {
-            var apt = await _context.Apartamentos.FindAsync(new object[] { apartamentoId }, ct);
-            return apt?.Status == Domain.Enums.StatusApartamento.Disponivel;
-        }
     }
 }

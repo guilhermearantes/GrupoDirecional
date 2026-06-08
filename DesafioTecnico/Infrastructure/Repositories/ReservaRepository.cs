@@ -11,11 +11,11 @@ namespace DesafioTecnico.Infrastructure.Repositories
 
         public ReservaRepository(AppDbContext context) => _context = context;
 
-        public Task<IEnumerable<Reserva>> GetAllAsync(CancellationToken ct = default)
-            => _context.Reservas.AsNoTracking().ToListAsync(ct).ContinueWith(t => (IEnumerable<Reserva>)t.Result, ct);
+        public async Task<IEnumerable<Reserva>> GetAllAsync(CancellationToken ct = default)
+            => await _context.Reservas.AsNoTracking().ToListAsync(ct);
 
         public Task<Reserva?> GetByIdAsync(Guid id, CancellationToken ct = default)
-            => _context.Reservas.FindAsync(new object[] { id }, ct).AsTask();
+            => _context.Reservas.FindAsync([id], ct).AsTask();
 
         public async Task AddAsync(Reserva reserva, CancellationToken ct = default)
         {
@@ -31,7 +31,7 @@ namespace DesafioTecnico.Infrastructure.Repositories
 
         public async Task DeleteAsync(Guid id, CancellationToken ct = default)
         {
-            var entity = await _context.Reservas.FindAsync(new object[] { id }, ct);
+            var entity = await _context.Reservas.FindAsync([id], ct);
             if (entity != null)
             {
                 _context.Reservas.Remove(entity);

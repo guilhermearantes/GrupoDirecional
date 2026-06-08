@@ -36,7 +36,7 @@ namespace DesafioTecnico.Api.DTOs
 
         /// <summary>Valor pago pela unidade em reais.</summary>
         /// <example>420000.00</example>
-        [Required]
+        [Range(0.01, double.MaxValue)]
         public decimal ValorPago { get; set; }
     }
 
@@ -44,7 +44,7 @@ namespace DesafioTecnico.Api.DTOs
     {
         /// <summary>Novo valor pago pela unidade em reais.</summary>
         /// <example>420000.00</example>
-        [Required]
+        [Range(0.01, double.MaxValue)]
         public decimal ValorPago { get; set; }
     }
 }

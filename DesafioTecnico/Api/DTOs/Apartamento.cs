@@ -45,17 +45,17 @@ namespace DesafioTecnico.Api.DTOs
 
         /// <summary>Número do andar.</summary>
         /// <example>10</example>
-        [Required]
+        [Range(1, 300)]
         public int Andar { get; set; }
 
         /// <summary>Área em metros quadrados.</summary>
         /// <example>75.50</example>
-        [Required]
+        [Range(0.01, 10000.0)]
         public decimal Area { get; set; }
 
         /// <summary>Valor de venda em reais.</summary>
         /// <example>450000.00</example>
-        [Required]
+        [Range(0.01, double.MaxValue)]
         public decimal Valor { get; set; }
     }
 

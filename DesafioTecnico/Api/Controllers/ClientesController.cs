@@ -36,6 +36,8 @@ namespace DesafioTecnico.Api.Controllers
             [FromQuery] int pageSize = 20,
             CancellationToken ct = default)
         {
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 100) pageSize = 20;
             var all = await _service.GetAllAsync(ct);
             var list = all.ToList();
             var items = list.Skip((page - 1) * pageSize).Take(pageSize);
@@ -63,15 +65,16 @@ namespace DesafioTecnico.Api.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var entity = _mapper.Map<Domain.Entities.Cliente>(dto);
+            Domain.Entities.Cliente created;
             try
             {
-                await _service.CreateAsync(entity, ct);
+                created = await _service.CreateAsync(entity, ct);
             }
             catch (DbUpdateException)
             {
                 return Conflict(new { error = "Email ou CPF já cadastrado." });
             }
-            return CreatedAtAction(nameof(Get), new { id = entity.Id }, _mapper.Map<ClienteReadDto>(entity));
+            return CreatedAtAction(nameof(Get), new { id = created.Id }, _mapper.Map<ClienteReadDto>(created));
         }
 
         /// <summary>Atualiza os dados de um cliente existente.</summary>

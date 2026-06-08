@@ -2,6 +2,7 @@ using DesafioTecnico.Domain.Entities;
 using DesafioTecnico.Infrastructure.Data;
 using DesafioTecnico.Infrastructure.Repositories.Interfaces;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace DesafioTecnico.Infrastructure.Services
@@ -37,8 +38,7 @@ namespace DesafioTecnico.Infrastructure.Services
             venda.Id = Guid.NewGuid();
             venda.DataVenda = DateTime.UtcNow;
 
-            var provider = _context.Database.ProviderName;
-            if (provider != "Microsoft.EntityFrameworkCore.InMemory")
+            if (_context.Database.IsRelational())
             {
                 using var trx = await _context.Database.BeginTransactionAsync(ct);
                 try
@@ -46,8 +46,6 @@ namespace DesafioTecnico.Infrastructure.Services
                     await _vendaRepo.AddAsync(venda, ct);
                     await _apartRepo.UpdateAsync(apt, ct);
                     await trx.CommitAsync(ct);
-                    _logger.LogInformation("Venda {VendaId} criada para apartamento {ApartamentoId}", venda.Id, venda.ApartamentoId);
-                    return venda;
                 }
                 catch
                 {
@@ -59,9 +57,10 @@ namespace DesafioTecnico.Infrastructure.Services
             {
                 await _vendaRepo.AddAsync(venda, ct);
                 await _apartRepo.UpdateAsync(apt, ct);
-                _logger.LogInformation("Venda {VendaId} criada para apartamento {ApartamentoId}", venda.Id, venda.ApartamentoId);
-                return venda;
             }
+
+            _logger.LogInformation("Venda {VendaId} criada para apartamento {ApartamentoId}", venda.Id, venda.ApartamentoId);
+            return venda;
         }
 
         public Task UpdateAsync(Venda venda, CancellationToken ct = default)

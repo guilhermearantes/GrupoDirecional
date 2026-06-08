@@ -11,11 +11,11 @@ namespace DesafioTecnico.Infrastructure.Repositories
 
         public VendaRepository(AppDbContext context) => _context = context;
 
-        public Task<IEnumerable<Venda>> GetAllAsync(CancellationToken ct = default)
-            => _context.Vendas.AsNoTracking().ToListAsync(ct).ContinueWith(t => (IEnumerable<Venda>)t.Result, ct);
+        public async Task<IEnumerable<Venda>> GetAllAsync(CancellationToken ct = default)
+            => await _context.Vendas.AsNoTracking().ToListAsync(ct);
 
         public Task<Venda?> GetByIdAsync(Guid id, CancellationToken ct = default)
-            => _context.Vendas.FindAsync(new object[] { id }, ct).AsTask();
+            => _context.Vendas.FindAsync([id], ct).AsTask();
 
         public async Task AddAsync(Venda venda, CancellationToken ct = default)
         {
@@ -31,7 +31,7 @@ namespace DesafioTecnico.Infrastructure.Repositories
 
         public async Task DeleteAsync(Guid id, CancellationToken ct = default)
         {
-            var entity = await _context.Vendas.FindAsync(new object[] { id }, ct);
+            var entity = await _context.Vendas.FindAsync([id], ct);
             if (entity != null)
             {
                 _context.Vendas.Remove(entity);

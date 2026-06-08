@@ -3,6 +3,10 @@ using System.Text.Json;
 
 namespace DesafioTecnico.Api.Middleware
 {
+    /// <summary>
+    /// Captura exceções não tratadas e retorna respostas JSON padronizadas:
+    /// <c>InvalidOperationException</c> → 400, <c>UnauthorizedAccessException</c> → 403, demais → 500.
+    /// </summary>
     public class ExceptionMiddleware
     {
         private readonly RequestDelegate _next;

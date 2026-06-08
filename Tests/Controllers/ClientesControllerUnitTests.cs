@@ -13,7 +13,7 @@ namespace Tests.Controllers
         private readonly Mock<IClienteService> _serviceMock;
         private readonly IMapper _mapper;
 
-        public ClientesControllerUnitTests()
+        public ClientesControllerTests()
         {
             _serviceMock = new Mock<IClienteService>();
             var cfg = new MapperConfiguration(c => c.AddProfile<DesafioTecnico.Api.Mapping.AutoMapperProfile>());
@@ -24,7 +24,7 @@ namespace Tests.Controllers
         public async Task Criar_DeveRetornarCreated_QuandoDadosValidos()
         {
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
-            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask).Verifiable();
+            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>())).ReturnsAsync(cliente).Verifiable();
 
             var controller = new ClientesController(_serviceMock.Object, _mapper);
             var dto = new DesafioTecnico.Api.DTOs.ClienteCreateDto { Nome = cliente.Nome, Email = cliente.Email, Cpf = cliente.Cpf, DataNascimento = cliente.DataNascimento };

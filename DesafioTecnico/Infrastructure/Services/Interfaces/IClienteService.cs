@@ -9,7 +9,7 @@ namespace DesafioTecnico.Infrastructure.Services.Interfaces
     {
         Task<IEnumerable<Cliente>> GetAllAsync(CancellationToken ct = default);
         Task<Cliente?> GetByIdAsync(Guid id, CancellationToken ct = default);
-        Task CreateAsync(Cliente cliente, CancellationToken ct = default);
+        Task<Cliente> CreateAsync(Cliente cliente, CancellationToken ct = default);
         Task UpdateAsync(Cliente cliente, CancellationToken ct = default);
         Task DeleteAsync(Guid id, CancellationToken ct = default);
     }

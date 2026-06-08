@@ -20,7 +20,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Post_InvalidModel_ReturnsBadRequest()
+        public async Task Criar_DeveRetornarBadRequest_QuandoModeloInvalido()
         {
             var controller = new VendasController(_serviceMock.Object, _mapper);
             controller.ModelState.AddModelError("ClienteId", "Required");
@@ -32,7 +32,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Post_ServiceThrows_ReturnsBadRequest()
+        public async Task Criar_DeveRetornarBadRequest_QuandoServicoLancaExcecao()
         {
             _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Venda>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("nope"));
             var controller = new VendasController(_serviceMock.Object, _mapper);
@@ -41,11 +41,11 @@ namespace Tests.Controllers
             var res = await controller.Post(dto) as BadRequestObjectResult;
 
             Assert.NotNull(res);
-            Assert.Contains("nope", res.Value.ToString());
+            Assert.Contains("nope", res.Value!.ToString());
         }
 
         [Fact]
-        public async Task Post_Valid_ReturnsCreated()
+        public async Task Criar_DeveRetornarCreated_QuandoDadosValidos()
         {
             var venda = new Venda { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), ValorPago = 100m, DataVenda = DateTime.UtcNow };
             _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Venda>(), It.IsAny<CancellationToken>())).ReturnsAsync(venda);
@@ -60,7 +60,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Put_NotFound_ReturnsNotFound()
+        public async Task Atualizar_DeveRetornarNotFound_QuandoNaoEncontrado()
         {
             _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Venda?)null);
             var controller = new VendasController(_serviceMock.Object, _mapper);
@@ -72,7 +72,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Put_Existing_ReturnsNoContent()
+        public async Task Atualizar_DeveRetornarNoContent_QuandoExiste()
         {
             var venda = new Venda { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), ValorPago = 100m, DataVenda = DateTime.UtcNow };
             _serviceMock.Setup(s => s.GetByIdAsync(venda.Id, It.IsAny<CancellationToken>())).ReturnsAsync(venda);
@@ -88,7 +88,7 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Put_InvalidModel_ReturnsBadRequest()
+        public async Task Atualizar_DeveRetornarBadRequest_QuandoModeloInvalido()
         {
             var venda = new Venda { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), ValorPago = 100m, DataVenda = DateTime.UtcNow };
             var controller = new VendasController(_serviceMock.Object, _mapper);

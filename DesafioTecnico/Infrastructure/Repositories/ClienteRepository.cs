@@ -11,11 +11,11 @@ namespace DesafioTecnico.Infrastructure.Repositories
 
         public ClienteRepository(AppDbContext context) => _context = context;
 
-        public Task<IEnumerable<Cliente>> GetAllAsync(CancellationToken ct = default)
-            => _context.Clientes.AsNoTracking().ToListAsync(ct).ContinueWith(t => (IEnumerable<Cliente>)t.Result, ct);
+        public async Task<IEnumerable<Cliente>> GetAllAsync(CancellationToken ct = default)
+            => await _context.Clientes.AsNoTracking().ToListAsync(ct);
 
         public Task<Cliente?> GetByIdAsync(Guid id, CancellationToken ct = default)
-            => _context.Clientes.FindAsync(new object[] { id }, ct).AsTask();
+            => _context.Clientes.FindAsync([id], ct).AsTask();
 
         public async Task AddAsync(Cliente cliente, CancellationToken ct = default)
         {
@@ -31,7 +31,7 @@ namespace DesafioTecnico.Infrastructure.Repositories
 
         public async Task DeleteAsync(Guid id, CancellationToken ct = default)
         {
-            var entity = await _context.Clientes.FindAsync(new object[] { id }, ct);
+            var entity = await _context.Clientes.FindAsync([id], ct);
             if (entity != null)
             {
                 _context.Clientes.Remove(entity);

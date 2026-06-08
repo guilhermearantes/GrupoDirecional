@@ -1,10 +1,12 @@
+using DesafioTecnico.Domain.Entities;
+using DesafioTecnico.Infrastructure.Data;
+using DesafioTecnico.Infrastructure.Repositories.Interfaces;
+using DesafioTecnico.Infrastructure.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
 namespace DesafioTecnico.Infrastructure.Services
 {
-    using DesafioTecnico.Infrastructure.Repositories.Interfaces;
-    using DesafioTecnico.Domain.Entities;
-    using DesafioTecnico.Infrastructure.Data;
-    using DesafioTecnico.Infrastructure.Services.Interfaces;
-    using Microsoft.Extensions.Logging;
 
     public class ReservaService : IReservaService
     {
@@ -49,10 +51,11 @@ namespace DesafioTecnico.Infrastructure.Services
             var reserva = await _reservaRepo.GetByIdAsync(id, ct);
             if (reserva == null) throw new InvalidOperationException("Reserva não encontrada.");
 
-            var apt = await _apartRepo.GetByIdAsync(reserva.ApartamentoId, ct);
+            var apt = await _apartRepo.GetByIdAsync(reserva.ApartamentoId, ct)
+                ?? throw new InvalidOperationException("Apartamento da reserva não encontrado.");
 
             reserva.Confirmar();
-            apt?.Vender();
+            apt.Vender();
 
             var venda = new Venda
             {
@@ -60,17 +63,16 @@ namespace DesafioTecnico.Infrastructure.Services
                 ClienteId = reserva.ClienteId,
                 ApartamentoId = reserva.ApartamentoId,
                 DataVenda = DateTime.UtcNow,
-                ValorPago = apt?.Valor ?? 0m
+                ValorPago = apt.Valor
             };
 
-            var provider = _context.Database.ProviderName;
-            if (provider != "Microsoft.EntityFrameworkCore.InMemory")
+            if (_context.Database.IsRelational())
             {
                 using var trx = await _context.Database.BeginTransactionAsync(ct);
                 try
                 {
                     await _vendaRepo.AddAsync(venda, ct);
-                    if (apt != null) await _apartRepo.UpdateAsync(apt, ct);
+                    await _apartRepo.UpdateAsync(apt, ct);
                     await _reservaRepo.UpdateAsync(reserva, ct);
                     await trx.CommitAsync(ct);
                 }
@@ -83,7 +85,7 @@ namespace DesafioTecnico.Infrastructure.Services
             else
             {
                 await _vendaRepo.AddAsync(venda, ct);
-                if (apt != null) await _apartRepo.UpdateAsync(apt, ct);
+                await _apartRepo.UpdateAsync(apt, ct);
                 await _reservaRepo.UpdateAsync(reserva, ct);
             }
 

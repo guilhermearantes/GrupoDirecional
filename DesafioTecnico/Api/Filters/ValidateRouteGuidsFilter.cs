@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace DesafioTecnico.Api.Filters
 {
+    /// <summary>
+    /// Rejeita requisições onde algum parâmetro de rota do tipo <see cref="Guid"/> seja <see cref="Guid.Empty"/>, retornando 400.
+    /// </summary>
     public class ValidateRouteGuidsFilter : IActionFilter
     {
         public void OnActionExecuting(ActionExecutingContext context)

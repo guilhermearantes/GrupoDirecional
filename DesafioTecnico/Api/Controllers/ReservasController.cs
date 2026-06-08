@@ -35,6 +35,8 @@ namespace DesafioTecnico.Api.Controllers
             [FromQuery] int pageSize = 20,
             CancellationToken ct = default)
         {
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 100) pageSize = 20;
             var all = await _service.GetAllAsync(ct);
             var list = all.ToList();
             var items = list.Skip((page - 1) * pageSize).Take(pageSize);
