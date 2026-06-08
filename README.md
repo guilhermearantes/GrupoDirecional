@@ -309,3 +309,93 @@ DesafioTecnico/
 - Segredos (SA_PASSWORD, JWT Key) são lidos de variáveis de ambiente; nunca hardcoded no código versionado.
 - CPF validado por formato `NNN.NNN.NNN-NN` no DTO de entrada.
 - Email e CPF com índice UNIQUE no banco, evitando duplicatas.
+
+---
+
+## Padrões de Projeto
+
+Cinco padrões consolidados foram aplicados. Cada um foi escolhido para resolver um problema concreto, não como exercício acadêmico.
+
+### Repository
+
+**Onde:** `Infrastructure/Repositories/`
+
+**Por que foi escolhido:** Os serviços precisam buscar e persistir entidades sem depender diretamente do EF Core. Com interfaces (`IClienteRepository`, `IApartamentoRepository`, etc.), o serviço não sabe se está falando com SQL Server, SQLite ou um repositório em memória.
+
+**O que se ganha:**
+- Testes de serviço trocam o banco real por EF InMemory sem nenhuma alteração no código de produção.
+- Uma eventual troca de ORM não afeta a camada de serviço.
+
+---
+
+### Unit of Work
+
+**Onde:** `Infrastructure/Data/IUnitOfWork.cs` / `UnitOfWork.cs`
+
+**Por que foi escolhido:** Antes da implementação, cada repositório chamava `SaveChangesAsync` individualmente. Na confirmação de uma reserva, isso produzia três escritas separadas no banco — uma falha no meio deixava o sistema em estado inconsistente (reserva confirmada, venda não criada, status do apartamento desatualizado).
+
+O `UnitOfWork` expõe todos os repositórios como propriedades e oferece um único `CommitAsync`. O EF Core envolve todas as entidades rastreadas em uma única transação implícita, eliminando a necessidade de `BeginTransactionAsync` explícito nos serviços.
+
+**O que se ganha:**
+- Atomicidade: ou tudo persiste, ou nada persiste.
+- Serviços mais limpos — um único ponto de persistência no final do fluxo.
+- Repositórios focados apenas em rastrear mudanças, sem responsabilidade de commit.
+
+---
+
+### Service Layer
+
+**Onde:** `Infrastructure/Services/`
+
+**Por que foi escolhido:** Controllers devem apenas traduzir HTTP → objeto → resposta HTTP. A orquestração — buscar entidades, aplicar regras de domínio, persistir via Unit of Work — fica exclusivamente nos serviços, evitando *fat controllers*.
+
+**O que se ganha:**
+- Regras de negócio testáveis com mocks simples, sem subir o pipeline HTTP.
+- Controllers intercambiáveis: o mesmo serviço poderia ser chamado por um consumer de fila ou um endpoint gRPC sem alteração alguma.
+
+---
+
+### Result Pattern
+
+**Onde:** `Domain/Results/Result.cs` → consumido em `Domain/Entities/`, `Infrastructure/Services/` e `Api/Controllers/`
+
+**Por que foi escolhido:** As entidades de domínio modelam máquinas de estado (apartamento Disponível → Reservado → Vendido). Quando uma transição é inválida — por exemplo, tentar reservar um apartamento já vendido — o código original lançava `InvalidOperationException`. Exceções como fluxo de controle são custosas, obscurecem o fluxo normal e forçam os controllers a usar `try/catch` para tratar situações *esperadas*.
+
+Com o Result Pattern, métodos como `Reservar()`, `Confirmar()` e `Cancelar()` retornam `Result` ou `Result<T>`. O controller verifica `result.IsSuccess` e responde diretamente, sem tratamento de exceção.
+
+```csharp
+// Antes
+try { await _service.ConfirmAsync(id, ct); return NoContent(); }
+catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+
+// Depois
+var result = await _service.ConfirmAsync(id, ct);
+return result.IsSuccess ? NoContent() : BadRequest(new { error = result.Error });
+```
+
+**O que se ganha:**
+- Fluxo de erro explícito na assinatura do método — quem chama sabe que pode falhar.
+- Sem custo de stack unwinding para regras de negócio previsíveis.
+- Mensagens de erro tipadas, não strings dentro de exceções.
+
+---
+
+### Factory
+
+**Onde:** `Domain/Factories/VendaFactory.cs`
+
+**Por que foi escolhido:** `Venda` é criada de duas formas distintas com lógica diferente:
+- **Venda direta** (`POST /vendas`): valor pago vem do comprador.
+- **Venda por confirmação de reserva** (`POST /reservas/{id}/confirm`): valor pago é o valor atual do apartamento no momento da confirmação.
+
+Sem o Factory, o object initializer com `Id = Guid.NewGuid()` e `DataVenda = DateTime.UtcNow` estava duplicado em `VendaService` e `ReservaService`, e a distinção entre os dois casos era implícita no código.
+
+```csharp
+// VendaFactory expõe dois métodos com nomes semânticos
+var venda = VendaFactory.CriarVendaDireta(clienteId, apartamentoId, valorPago);
+var venda = VendaFactory.CriarPorReserva(reserva, apartamento);
+```
+
+**O que se ganha:**
+- Os dois caminhos de criação ficam documentados por nome, não enterrados em object initializers.
+- Invariantes de criação (`Id`, `DataVenda`) garantidos em um único lugar — impossível criar uma `Venda` sem eles.
