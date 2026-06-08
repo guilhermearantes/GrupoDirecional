@@ -1,33 +1,40 @@
 using DesafioTecnico.Domain.Entities;
-using DesafioTecnico.Infrastructure.Repositories.Interfaces;
+using DesafioTecnico.Infrastructure.Data;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
 
 namespace DesafioTecnico.Infrastructure.Services
 {
     public class ApartamentoService : IApartamentoService
     {
-        private readonly IApartamentoRepository _repo;
+        private readonly IUnitOfWork _uow;
 
-        public ApartamentoService(IApartamentoRepository repo) => _repo = repo;
+        public ApartamentoService(IUnitOfWork uow) => _uow = uow;
 
         public Task<IEnumerable<Apartamento>> GetAllAsync(CancellationToken ct = default)
-            => _repo.GetAllAsync(ct);
+            => _uow.Apartamentos.GetAllAsync(ct);
 
         public Task<Apartamento?> GetByIdAsync(Guid id, CancellationToken ct = default)
-            => _repo.GetByIdAsync(id, ct);
+            => _uow.Apartamentos.GetByIdAsync(id, ct);
 
         public async Task<Apartamento> CreateAsync(Apartamento apt, CancellationToken ct = default)
         {
             apt.Id = Guid.NewGuid();
             apt.Status = Domain.Enums.StatusApartamento.Disponivel;
-            await _repo.AddAsync(apt, ct);
+            await _uow.Apartamentos.AddAsync(apt, ct);
+            await _uow.CommitAsync(ct);
             return apt;
         }
 
-        public Task UpdateAsync(Apartamento apt, CancellationToken ct = default)
-            => _repo.UpdateAsync(apt, ct);
+        public async Task UpdateAsync(Apartamento apt, CancellationToken ct = default)
+        {
+            await _uow.Apartamentos.UpdateAsync(apt, ct);
+            await _uow.CommitAsync(ct);
+        }
 
-        public Task DeleteAsync(Guid id, CancellationToken ct = default)
-            => _repo.DeleteAsync(id, ct);
+        public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+        {
+            await _uow.Apartamentos.DeleteAsync(id, ct);
+            await _uow.CommitAsync(ct);
+        }
     }
 }

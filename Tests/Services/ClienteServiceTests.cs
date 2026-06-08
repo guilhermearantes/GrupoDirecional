@@ -1,22 +1,23 @@
 using Microsoft.EntityFrameworkCore;
+using DesafioTecnico.Infrastructure.Data;
+using DesafioTecnico.Infrastructure.Services;
 
 namespace Tests.Services
 {
     public class ClienteServiceTests
     {
         [Fact]
-        public async Task CreateAndGetCliente_Works()
+        public async Task CriarEObterCliente_DeveRetornarClientePersistido()
         {
-            var options = new DbContextOptionsBuilder<DesafioTecnico.Infrastructure.Data.AppDbContext>()
+            var options = new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(databaseName: "TestClienteDb")
                 .Options;
 
-            using var context = new DesafioTecnico.Infrastructure.Data.AppDbContext(options);
+            using var context = new AppDbContext(options);
+            var uow = new UnitOfWork(context);
+            var service = new ClienteService(uow);
 
             var cliente = Tests.Fixtures.FakeDataBuilder.CreateCliente();
-
-            var repo = new DesafioTecnico.Infrastructure.Repositories.ClienteRepository(context);
-            var service = new DesafioTecnico.Infrastructure.Services.ClienteService(repo);
 
             await service.CreateAsync(cliente);
 

@@ -1,47 +1,48 @@
 using Microsoft.EntityFrameworkCore;
+using DesafioTecnico.Infrastructure.Data;
+using DesafioTecnico.Infrastructure.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Tests.Services
 {
     public class VendaServiceTests
     {
         [Fact]
-        public async Task CreateVenda_MarksApartmentAsVendido()
+        public async Task Criar_DeveMudarApartamentoParaVendido_QuandoDisponivel()
         {
-            var options = new DbContextOptionsBuilder<DesafioTecnico.Infrastructure.Data.AppDbContext>()
+            var options = new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(databaseName: "TestDb_CreateVenda")
                 .Options;
 
-            using var context = new DesafioTecnico.Infrastructure.Data.AppDbContext(options);
+            using var context = new AppDbContext(options);
 
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
-            var apt = Fixtures.FakeDataBuilder.CreateApartamento(); // Status = Disponivel
+            var apt = Fixtures.FakeDataBuilder.CreateApartamento();
             context.Clientes.Add(cliente);
             context.Apartamentos.Add(apt);
             context.SaveChanges();
 
-            var vendaRepo = new DesafioTecnico.Infrastructure.Repositories.VendaRepository(context);
-            var apartRepo = new DesafioTecnico.Infrastructure.Repositories.ApartamentoRepository(context);
-            var vendaService = new DesafioTecnico.Infrastructure.Services.VendaService(context, vendaRepo, apartRepo, Microsoft.Extensions.Logging.Abstractions.NullLogger<DesafioTecnico.Infrastructure.Services.VendaService>.Instance);
+            var uow = new UnitOfWork(context);
+            var service = new VendaService(uow, NullLogger<VendaService>.Instance);
 
             var venda = Fixtures.FakeDataBuilder.CreateVenda(cliente.Id, apt.Id);
+            var created = await service.CreateAsync(venda);
 
-            var created = await vendaService.CreateAsync(venda);
-
-            var updatedApt = await apartRepo.GetByIdAsync(apt.Id);
-            Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Vendido, updatedApt.Status);
+            var updatedApt = await uow.Apartamentos.GetByIdAsync(apt.Id);
+            Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Vendido, updatedApt!.Status);
             Assert.Equal(venda.Id, created.Id);
         }
 
         [Theory]
         [InlineData(DesafioTecnico.Domain.Enums.StatusApartamento.Vendido)]
         [InlineData(DesafioTecnico.Domain.Enums.StatusApartamento.Reservado)]
-        public async Task CreateVenda_ThrowsWhenApartmentNotDisponivel(DesafioTecnico.Domain.Enums.StatusApartamento status)
+        public async Task Criar_DeveLancarExcecao_QuandoApartamentoNaoDisponivel(DesafioTecnico.Domain.Enums.StatusApartamento status)
         {
-            var options = new DbContextOptionsBuilder<DesafioTecnico.Infrastructure.Data.AppDbContext>()
+            var options = new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(databaseName: $"TestDb_CreateVenda_NotAvailable_{status}")
                 .Options;
 
-            using var context = new DesafioTecnico.Infrastructure.Data.AppDbContext(options);
+            using var context = new AppDbContext(options);
 
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
@@ -50,13 +51,12 @@ namespace Tests.Services
             context.Apartamentos.Add(apt);
             context.SaveChanges();
 
-            var vendaRepo = new DesafioTecnico.Infrastructure.Repositories.VendaRepository(context);
-            var apartRepo = new DesafioTecnico.Infrastructure.Repositories.ApartamentoRepository(context);
-            var vendaService = new DesafioTecnico.Infrastructure.Services.VendaService(context, vendaRepo, apartRepo, Microsoft.Extensions.Logging.Abstractions.NullLogger<DesafioTecnico.Infrastructure.Services.VendaService>.Instance);
+            var uow = new UnitOfWork(context);
+            var service = new VendaService(uow, NullLogger<VendaService>.Instance);
 
             var venda = Fixtures.FakeDataBuilder.CreateVenda(cliente.Id, apt.Id);
 
-            await Assert.ThrowsAsync<InvalidOperationException>(async () => await vendaService.CreateAsync(venda));
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => await service.CreateAsync(venda));
         }
     }
 }

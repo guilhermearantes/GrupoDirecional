@@ -18,25 +18,19 @@ namespace DesafioTecnico.Infrastructure.Repositories
             => _context.Vendas.FindAsync([id], ct).AsTask();
 
         public async Task AddAsync(Venda venda, CancellationToken ct = default)
-        {
-            await _context.Vendas.AddAsync(venda, ct);
-            await _context.SaveChangesAsync(ct);
-        }
+            => await _context.Vendas.AddAsync(venda, ct);
 
-        public async Task UpdateAsync(Venda venda, CancellationToken ct = default)
+        public Task UpdateAsync(Venda venda, CancellationToken ct = default)
         {
             _context.Vendas.Update(venda);
-            await _context.SaveChangesAsync(ct);
+            return Task.CompletedTask;
         }
 
         public async Task DeleteAsync(Guid id, CancellationToken ct = default)
         {
             var entity = await _context.Vendas.FindAsync([id], ct);
             if (entity != null)
-            {
                 _context.Vendas.Remove(entity);
-                await _context.SaveChangesAsync(ct);
-            }
         }
     }
 }

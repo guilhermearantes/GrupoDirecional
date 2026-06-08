@@ -71,11 +71,8 @@ else
 {
     builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connection));
 }
-builder.Services.AddScoped<DesafioTecnico.Infrastructure.Repositories.Interfaces.IClienteRepository, DesafioTecnico.Infrastructure.Repositories.ClienteRepository>();
+builder.Services.AddScoped<DesafioTecnico.Infrastructure.Data.IUnitOfWork, DesafioTecnico.Infrastructure.Data.UnitOfWork>();
 builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IClienteService, DesafioTecnico.Infrastructure.Services.ClienteService>();
-builder.Services.AddScoped<DesafioTecnico.Infrastructure.Repositories.Interfaces.IApartamentoRepository, DesafioTecnico.Infrastructure.Repositories.ApartamentoRepository>();
-builder.Services.AddScoped<DesafioTecnico.Infrastructure.Repositories.Interfaces.IReservaRepository, DesafioTecnico.Infrastructure.Repositories.ReservaRepository>();
-builder.Services.AddScoped<DesafioTecnico.Infrastructure.Repositories.Interfaces.IVendaRepository, DesafioTecnico.Infrastructure.Repositories.VendaRepository>();
 builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IReservaService, DesafioTecnico.Infrastructure.Services.ReservaService>();
 builder.Services.AddScoped<DesafioTecnico.Infrastructure.Security.JwtTokenGenerator>();
 builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IAuthService, DesafioTecnico.Infrastructure.Services.AuthService>();

@@ -18,26 +18,19 @@ namespace DesafioTecnico.Infrastructure.Repositories
             => _context.Apartamentos.FindAsync([id], ct).AsTask();
 
         public async Task AddAsync(Apartamento apt, CancellationToken ct = default)
-        {
-            await _context.Apartamentos.AddAsync(apt, ct);
-            await _context.SaveChangesAsync(ct);
-        }
+            => await _context.Apartamentos.AddAsync(apt, ct);
 
-        public async Task UpdateAsync(Apartamento apt, CancellationToken ct = default)
+        public Task UpdateAsync(Apartamento apt, CancellationToken ct = default)
         {
             _context.Apartamentos.Update(apt);
-            await _context.SaveChangesAsync(ct);
+            return Task.CompletedTask;
         }
 
         public async Task DeleteAsync(Guid id, CancellationToken ct = default)
         {
             var entity = await _context.Apartamentos.FindAsync([id], ct);
             if (entity != null)
-            {
                 _context.Apartamentos.Remove(entity);
-                await _context.SaveChangesAsync(ct);
-            }
         }
-
     }
 }

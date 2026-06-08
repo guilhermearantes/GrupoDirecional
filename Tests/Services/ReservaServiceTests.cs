@@ -1,17 +1,27 @@
 using Microsoft.EntityFrameworkCore;
+using DesafioTecnico.Infrastructure.Data;
+using DesafioTecnico.Infrastructure.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Tests.Services
 {
     public class ReservaServiceTests
     {
-        [Fact]
-        public async Task CreateReserva_SetsApartmentToReservado()
+        private static (AppDbContext context, UnitOfWork uow, ReservaService service) BuildSut(string dbName)
         {
-            var options = new DbContextOptionsBuilder<DesafioTecnico.Infrastructure.Data.AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDb_CreateReserva")
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(databaseName: dbName)
                 .Options;
+            var context = new AppDbContext(options);
+            var uow = new UnitOfWork(context);
+            var service = new ReservaService(uow, NullLogger<ReservaService>.Instance);
+            return (context, uow, service);
+        }
 
-            using var context = new DesafioTecnico.Infrastructure.Data.AppDbContext(options);
+        [Fact]
+        public async Task Criar_DeveMudarApartamentoParaReservado_QuandoDisponivel()
+        {
+            var (context, uow, service) = BuildSut("TestDb_CreateReserva");
 
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
@@ -19,32 +29,25 @@ namespace Tests.Services
             context.Apartamentos.Add(apt);
             context.SaveChanges();
 
-            var reservaRepo = new DesafioTecnico.Infrastructure.Repositories.ReservaRepository(context);
-            var apartRepo = new DesafioTecnico.Infrastructure.Repositories.ApartamentoRepository(context);
-            var vendaRepo = new DesafioTecnico.Infrastructure.Repositories.VendaRepository(context);
-            var reservaService = new DesafioTecnico.Infrastructure.Services.ReservaService(context, reservaRepo, apartRepo, vendaRepo, Microsoft.Extensions.Logging.Abstractions.NullLogger<DesafioTecnico.Infrastructure.Services.ReservaService>.Instance);
-
             var reserva = new DesafioTecnico.Domain.Entities.Reserva
             {
                 ClienteId = cliente.Id,
                 ApartamentoId = apt.Id
             };
 
-            var created = await reservaService.CreateAsync(reserva);
+            var created = await service.CreateAsync(reserva);
 
-            var updatedApt = await apartRepo.GetByIdAsync(apt.Id);
-            Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Reservado, updatedApt.Status);
+            var updatedApt = await uow.Apartamentos.GetByIdAsync(apt.Id);
+            Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Reservado, updatedApt!.Status);
             Assert.Equal(reserva.Id, created.Id);
+
+            context.Dispose();
         }
 
         [Fact]
-        public async Task CreateReserva_ThrowsWhenApartmentNotAvailable()
+        public async Task Criar_DeveLancarExcecao_QuandoApartamentoNaoDisponivel()
         {
-            var options = new DbContextOptionsBuilder<DesafioTecnico.Infrastructure.Data.AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDb_CreateReserva_NotAvailable")
-                .Options;
-
-            using var context = new DesafioTecnico.Infrastructure.Data.AppDbContext(options);
+            var (context, _, service) = BuildSut("TestDb_CreateReserva_NotAvailable");
 
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
@@ -53,51 +56,34 @@ namespace Tests.Services
             context.Apartamentos.Add(apt);
             context.SaveChanges();
 
-            var reservaRepo = new DesafioTecnico.Infrastructure.Repositories.ReservaRepository(context);
-            var apartRepo = new DesafioTecnico.Infrastructure.Repositories.ApartamentoRepository(context);
-            var vendaRepo = new DesafioTecnico.Infrastructure.Repositories.VendaRepository(context);
-            var reservaService = new DesafioTecnico.Infrastructure.Services.ReservaService(context, reservaRepo, apartRepo, vendaRepo, Microsoft.Extensions.Logging.Abstractions.NullLogger<DesafioTecnico.Infrastructure.Services.ReservaService>.Instance);
-
             var reserva = new DesafioTecnico.Domain.Entities.Reserva
             {
                 ClienteId = cliente.Id,
                 ApartamentoId = apt.Id
             };
 
-            await Assert.ThrowsAsync<InvalidOperationException>(async () => await reservaService.CreateAsync(reserva));
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => await service.CreateAsync(reserva));
+            context.Dispose();
         }
 
         [Fact]
-        public async Task ConfirmReserva_ThrowsWhenReservaNotFound()
+        public async Task Confirmar_DeveLancarExcecao_QuandoReservaNaoEncontrada()
         {
-            var options = new DbContextOptionsBuilder<DesafioTecnico.Infrastructure.Data.AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDb_ConfirmReserva_NotFound")
-                .Options;
+            var (context, _, service) = BuildSut("TestDb_ConfirmReserva_NotFound");
 
-            using var context = new DesafioTecnico.Infrastructure.Data.AppDbContext(options);
-
-            var reservaRepo = new DesafioTecnico.Infrastructure.Repositories.ReservaRepository(context);
-            var apartRepo = new DesafioTecnico.Infrastructure.Repositories.ApartamentoRepository(context);
-            var vendaRepo = new DesafioTecnico.Infrastructure.Repositories.VendaRepository(context);
-            var reservaService = new DesafioTecnico.Infrastructure.Services.ReservaService(context, reservaRepo, apartRepo, vendaRepo, Microsoft.Extensions.Logging.Abstractions.NullLogger<DesafioTecnico.Infrastructure.Services.ReservaService>.Instance);
-
-            await Assert.ThrowsAsync<InvalidOperationException>(async () => await reservaService.ConfirmAsync(Guid.NewGuid()));
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => await service.ConfirmAsync(Guid.NewGuid()));
+            context.Dispose();
         }
 
         [Fact]
-        public async Task ConfirmReserva_ThrowsWhenNotPending()
+        public async Task Confirmar_DeveLancarExcecao_QuandoReservaJaConfirmada()
         {
-            var options = new DbContextOptionsBuilder<DesafioTecnico.Infrastructure.Data.AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDb_ConfirmReserva_NotPending")
-                .Options;
-
-            using var context = new DesafioTecnico.Infrastructure.Data.AppDbContext(options);
+            var (context, _, service) = BuildSut("TestDb_ConfirmReserva_NotPending");
 
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
             context.Clientes.Add(cliente);
             context.Apartamentos.Add(apt);
-            context.SaveChanges();
 
             var reserva = new DesafioTecnico.Domain.Entities.Reserva
             {
@@ -107,32 +93,22 @@ namespace Tests.Services
                 DataReserva = DateTime.UtcNow,
                 Status = DesafioTecnico.Domain.Enums.StatusReserva.Confirmada
             };
-
             context.Reservas.Add(reserva);
             context.SaveChanges();
 
-            var reservaRepo = new DesafioTecnico.Infrastructure.Repositories.ReservaRepository(context);
-            var apartRepo = new DesafioTecnico.Infrastructure.Repositories.ApartamentoRepository(context);
-            var vendaRepo = new DesafioTecnico.Infrastructure.Repositories.VendaRepository(context);
-            var reservaService = new DesafioTecnico.Infrastructure.Services.ReservaService(context, reservaRepo, apartRepo, vendaRepo, Microsoft.Extensions.Logging.Abstractions.NullLogger<DesafioTecnico.Infrastructure.Services.ReservaService>.Instance);
-
-            await Assert.ThrowsAsync<InvalidOperationException>(async () => await reservaService.ConfirmAsync(reserva.Id));
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => await service.ConfirmAsync(reserva.Id));
+            context.Dispose();
         }
 
         [Fact]
-        public async Task CancelReserva_ThrowsWhenNotPending()
+        public async Task Cancelar_DeveLancarExcecao_QuandoReservaJaConfirmada()
         {
-            var options = new DbContextOptionsBuilder<DesafioTecnico.Infrastructure.Data.AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDb_CancelReserva_NotPending")
-                .Options;
-
-            using var context = new DesafioTecnico.Infrastructure.Data.AppDbContext(options);
+            var (context, _, service) = BuildSut("TestDb_CancelReserva_NotPending");
 
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
             context.Clientes.Add(cliente);
             context.Apartamentos.Add(apt);
-            context.SaveChanges();
 
             var reserva = new DesafioTecnico.Domain.Entities.Reserva
             {
@@ -142,26 +118,17 @@ namespace Tests.Services
                 DataReserva = DateTime.UtcNow,
                 Status = DesafioTecnico.Domain.Enums.StatusReserva.Confirmada
             };
-
             context.Reservas.Add(reserva);
             context.SaveChanges();
 
-            var reservaRepo = new DesafioTecnico.Infrastructure.Repositories.ReservaRepository(context);
-            var apartRepo = new DesafioTecnico.Infrastructure.Repositories.ApartamentoRepository(context);
-            var vendaRepo = new DesafioTecnico.Infrastructure.Repositories.VendaRepository(context);
-            var reservaService = new DesafioTecnico.Infrastructure.Services.ReservaService(context, reservaRepo, apartRepo, vendaRepo, Microsoft.Extensions.Logging.Abstractions.NullLogger<DesafioTecnico.Infrastructure.Services.ReservaService>.Instance);
-
-            await Assert.ThrowsAsync<InvalidOperationException>(async () => await reservaService.CancelAsync(reserva.Id));
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => await service.CancelAsync(reserva.Id));
+            context.Dispose();
         }
 
         [Fact]
-        public async Task ConfirmReserva_CreatesVenda_And_MarksApartamentoVendido()
+        public async Task Confirmar_DeveCriarVenda_EMudarApartamentoParaVendido()
         {
-            var options = new DbContextOptionsBuilder<DesafioTecnico.Infrastructure.Data.AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDb_ConfirmReserva")
-                .Options;
-
-            using var context = new DesafioTecnico.Infrastructure.Data.AppDbContext(options);
+            var (context, uow, service) = BuildSut("TestDb_ConfirmReserva");
 
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
@@ -169,39 +136,32 @@ namespace Tests.Services
             context.Apartamentos.Add(apt);
             context.SaveChanges();
 
-            var reservaRepo = new DesafioTecnico.Infrastructure.Repositories.ReservaRepository(context);
-            var apartRepo = new DesafioTecnico.Infrastructure.Repositories.ApartamentoRepository(context);
-            var vendaRepo = new DesafioTecnico.Infrastructure.Repositories.VendaRepository(context);
-            var reservaService = new DesafioTecnico.Infrastructure.Services.ReservaService(context, reservaRepo, apartRepo, vendaRepo, Microsoft.Extensions.Logging.Abstractions.NullLogger<DesafioTecnico.Infrastructure.Services.ReservaService>.Instance);
-
             var reserva = new DesafioTecnico.Domain.Entities.Reserva
             {
                 ClienteId = cliente.Id,
                 ApartamentoId = apt.Id
             };
 
-            var created = await reservaService.CreateAsync(reserva);
+            var created = await service.CreateAsync(reserva);
+            await service.ConfirmAsync(created.Id);
 
-            await reservaService.ConfirmAsync(created.Id);
+            var updatedApt = await uow.Apartamentos.GetByIdAsync(apt.Id);
+            Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Vendido, updatedApt!.Status);
 
-            var updatedApt = await apartRepo.GetByIdAsync(apt.Id);
-            Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Vendido, updatedApt.Status);
-
-            var venda = (await vendaRepo.GetAllAsync()).FirstOrDefault(v => v.ApartamentoId == apt.Id && v.ClienteId == cliente.Id);
+            var vendas = await uow.Vendas.GetAllAsync();
+            var venda = vendas.FirstOrDefault(v => v.ApartamentoId == apt.Id && v.ClienteId == cliente.Id);
             Assert.NotNull(venda);
 
-            var updatedReserva = await reservaRepo.GetByIdAsync(created.Id);
-            Assert.Equal(DesafioTecnico.Domain.Enums.StatusReserva.Confirmada, updatedReserva.Status);
+            var updatedReserva = await uow.Reservas.GetByIdAsync(created.Id);
+            Assert.Equal(DesafioTecnico.Domain.Enums.StatusReserva.Confirmada, updatedReserva!.Status);
+
+            context.Dispose();
         }
 
         [Fact]
-        public async Task CancelReserva_SetsApartmentToDisponivel_And_StatusCancelada()
+        public async Task Cancelar_DeveDevolverApartamentoParaDisponivel_EMudarStatusParaCancelada()
         {
-            var options = new DbContextOptionsBuilder<DesafioTecnico.Infrastructure.Data.AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDb_CancelReserva")
-                .Options;
-
-            using var context = new DesafioTecnico.Infrastructure.Data.AppDbContext(options);
+            var (context, uow, service) = BuildSut("TestDb_CancelReserva");
 
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
@@ -209,26 +169,22 @@ namespace Tests.Services
             context.Apartamentos.Add(apt);
             context.SaveChanges();
 
-            var reservaRepo = new DesafioTecnico.Infrastructure.Repositories.ReservaRepository(context);
-            var apartRepo = new DesafioTecnico.Infrastructure.Repositories.ApartamentoRepository(context);
-            var vendaRepo = new DesafioTecnico.Infrastructure.Repositories.VendaRepository(context);
-            var reservaService = new DesafioTecnico.Infrastructure.Services.ReservaService(context, reservaRepo, apartRepo, vendaRepo, Microsoft.Extensions.Logging.Abstractions.NullLogger<DesafioTecnico.Infrastructure.Services.ReservaService>.Instance);
-
             var reserva = new DesafioTecnico.Domain.Entities.Reserva
             {
                 ClienteId = cliente.Id,
                 ApartamentoId = apt.Id
             };
 
-            var created = await reservaService.CreateAsync(reserva);
+            var created = await service.CreateAsync(reserva);
+            await service.CancelAsync(created.Id);
 
-            await reservaService.CancelAsync(created.Id);
+            var updatedApt = await uow.Apartamentos.GetByIdAsync(apt.Id);
+            Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Disponivel, updatedApt!.Status);
 
-            var updatedApt = await apartRepo.GetByIdAsync(apt.Id);
-            Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Disponivel, updatedApt.Status);
+            var updatedReserva = await uow.Reservas.GetByIdAsync(created.Id);
+            Assert.Equal(DesafioTecnico.Domain.Enums.StatusReserva.Cancelada, updatedReserva!.Status);
 
-            var updatedReserva = await reservaRepo.GetByIdAsync(created.Id);
-            Assert.Equal(DesafioTecnico.Domain.Enums.StatusReserva.Cancelada, updatedReserva.Status);
+            context.Dispose();
         }
     }
 }
