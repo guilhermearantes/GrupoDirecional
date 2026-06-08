@@ -6,7 +6,7 @@ services:
       SA_PASSWORD: "${SA_PASSWORD:-Grup0D!reCional2026}"
       ACCEPT_EULA: "Y"
     ports:
-      - "14333:1433"
+      - "${DB_PORT:-14333}:1433"
     healthcheck:
       test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P \"$SA_PASSWORD\" -Q \"SELECT 1\" || exit 1"]
       interval: 10s
