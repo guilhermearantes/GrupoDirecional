@@ -7,23 +7,27 @@ namespace Tests.Services
 {
     public class VendaServiceTests
     {
+        private static (AppDbContext context, UnitOfWork uow, VendaService service) BuildSut(string dbName)
+        {
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(databaseName: dbName)
+                .Options;
+            var context = new AppDbContext(options);
+            var uow = new UnitOfWork(context);
+            var service = new VendaService(uow, NullLogger<VendaService>.Instance);
+            return (context, uow, service);
+        }
+
         [Fact]
         public async Task Criar_DeveMudarApartamentoParaVendido_QuandoDisponivel()
         {
-            var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDb_CreateVenda")
-                .Options;
-
-            using var context = new AppDbContext(options);
+            var (context, uow, service) = BuildSut("TestDb_CreateVenda");
 
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
             context.Clientes.Add(cliente);
             context.Apartamentos.Add(apt);
             context.SaveChanges();
-
-            var uow = new UnitOfWork(context);
-            var service = new VendaService(uow, NullLogger<VendaService>.Instance);
 
             var venda = Fixtures.FakeDataBuilder.CreateVenda(cliente.Id, apt.Id);
             var result = await service.CreateAsync(venda);
@@ -39,11 +43,7 @@ namespace Tests.Services
         [InlineData(DesafioTecnico.Domain.Enums.StatusApartamento.Reservado)]
         public async Task Criar_DeveRetornarFalha_QuandoApartamentoNaoDisponivel(DesafioTecnico.Domain.Enums.StatusApartamento status)
         {
-            var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(databaseName: $"TestDb_CreateVenda_NotAvailable_{status}")
-                .Options;
-
-            using var context = new AppDbContext(options);
+            var (context, _, service) = BuildSut($"TestDb_CreateVenda_NotAvailable_{status}");
 
             var cliente = Fixtures.FakeDataBuilder.CreateCliente();
             var apt = Fixtures.FakeDataBuilder.CreateApartamento();
@@ -52,14 +52,54 @@ namespace Tests.Services
             context.Apartamentos.Add(apt);
             context.SaveChanges();
 
-            var uow = new UnitOfWork(context);
-            var service = new VendaService(uow, NullLogger<VendaService>.Instance);
-
             var venda = Fixtures.FakeDataBuilder.CreateVenda(cliente.Id, apt.Id);
             var result = await service.CreateAsync(venda);
 
             Assert.True(result.IsFailure);
             Assert.NotEmpty(result.Error);
+        }
+
+        [Fact]
+        public async Task Atualizar_DevePersistirNovoValorPago()
+        {
+            var (context, uow, service) = BuildSut("TestDb_UpdateVenda");
+
+            var cliente = Fixtures.FakeDataBuilder.CreateCliente();
+            var apt = Fixtures.FakeDataBuilder.CreateApartamento();
+            context.Clientes.Add(cliente);
+            context.Apartamentos.Add(apt);
+            context.SaveChanges();
+
+            var venda = Fixtures.FakeDataBuilder.CreateVenda(cliente.Id, apt.Id);
+            context.Vendas.Add(venda);
+            context.SaveChanges();
+
+            venda.ValorPago = 500000m;
+            await service.UpdateAsync(venda);
+
+            var fetched = await uow.Vendas.GetByIdAsync(venda.Id);
+            Assert.Equal(500000m, fetched!.ValorPago);
+        }
+
+        [Fact]
+        public async Task Excluir_DeveRemoverVenda()
+        {
+            var (context, uow, service) = BuildSut("TestDb_DeleteVenda");
+
+            var cliente = Fixtures.FakeDataBuilder.CreateCliente();
+            var apt = Fixtures.FakeDataBuilder.CreateApartamento();
+            context.Clientes.Add(cliente);
+            context.Apartamentos.Add(apt);
+            context.SaveChanges();
+
+            var venda = Fixtures.FakeDataBuilder.CreateVenda(cliente.Id, apt.Id);
+            context.Vendas.Add(venda);
+            context.SaveChanges();
+
+            await service.DeleteAsync(venda.Id);
+
+            var fetched = await uow.Vendas.GetByIdAsync(venda.Id);
+            Assert.Null(fetched);
         }
     }
 }

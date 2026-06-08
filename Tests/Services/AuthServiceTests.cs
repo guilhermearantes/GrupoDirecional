@@ -1,110 +1,79 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 using DesafioTecnico.Infrastructure.Data;
+using DesafioTecnico.Infrastructure.Security;
+using DesafioTecnico.Infrastructure.Services;
 
 namespace Tests.Services
 {
     public class AuthServiceTests
     {
-        [Fact]
-        public async Task Authenticate_ReturnsToken_WhenCredentialsValid()
+        private static AuthService BuildSut(string dbName, out AppDbContext context)
         {
             var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestAuthDb")
+                .UseInMemoryDatabase(databaseName: dbName)
                 .Options;
+            context = new AppDbContext(options);
 
-            using var context = new AppDbContext(options);
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Jwt:Key"]          = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
+                    ["Jwt:Issuer"]       = "tests",
+                    ["Jwt:Audience"]     = "tests",
+                    ["Jwt:ExpiryMinutes"] = "60"
+                })
+                .Build();
 
-            var user = new DesafioTecnico.Domain.Entities.Usuario
+            var tokenGenerator = new JwtTokenGenerator(config);
+            return new AuthService(context, tokenGenerator, NullLogger<AuthService>.Instance);
+        }
+
+        [Fact]
+        public async Task Autenticar_DeveRetornarToken_QuandoCredenciaisValidas()
+        {
+            var service = BuildSut("TestAuthDb_Valid", out var context);
+            context.Usuarios.Add(new DesafioTecnico.Domain.Entities.Usuario
             {
                 Id = Guid.NewGuid(),
                 Username = "admin",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("secret"),
                 Role = "Admin"
-            };
-
-            context.Usuarios.Add(user);
+            });
             context.SaveChanges();
 
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["Jwt:Key"] = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
-                ["Jwt:Issuer"] = "tests",
-                ["Jwt:Audience"] = "tests",
-                ["Jwt:ExpiryMinutes"] = "60"
-            };
-
-            var configuration = new ConfigurationBuilder().AddInMemoryCollection(inMemorySettings).Build();
-
-            var tokenGenerator = new DesafioTecnico.Infrastructure.Security.JwtTokenGenerator(configuration);
-            var authService = new DesafioTecnico.Infrastructure.Services.AuthService(context, tokenGenerator, Microsoft.Extensions.Logging.Abstractions.NullLogger<DesafioTecnico.Infrastructure.Services.AuthService>.Instance);
-
-            var result = await authService.AuthenticateAsync("admin", "secret");
+            var result = await service.AuthenticateAsync("admin", "secret");
 
             Assert.NotNull(result);
             Assert.False(string.IsNullOrEmpty(result!.Value.Token));
         }
 
         [Fact]
-        public async Task Authenticate_ReturnsNull_WhenPasswordInvalid()
+        public async Task Autenticar_DeveRetornarNull_QuandoSenhaInvalida()
         {
-            var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestAuthDb_InvalidPassword")
-                .Options;
-
-            using var context = new AppDbContext(options);
-
-            var user = new DesafioTecnico.Domain.Entities.Usuario
+            var service = BuildSut("TestAuthDb_InvalidPassword", out var context);
+            context.Usuarios.Add(new DesafioTecnico.Domain.Entities.Usuario
             {
                 Id = Guid.NewGuid(),
                 Username = "admin",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("secret"),
                 Role = "Admin"
-            };
-
-            context.Usuarios.Add(user);
+            });
             context.SaveChanges();
 
-            var inMemorySettings = new Dictionary<string, string?>
-            {
-                ["Jwt:Key"] = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
-                ["Jwt:Issuer"] = "tests",
-                ["Jwt:Audience"] = "tests",
-                ["Jwt:ExpiryMinutes"] = "60"
-            };
+            var result = await service.AuthenticateAsync("admin", "wrongpassword");
 
-            var configuration = new ConfigurationBuilder().AddInMemoryCollection(inMemorySettings).Build();
-
-            var tokenGenerator = new DesafioTecnico.Infrastructure.Security.JwtTokenGenerator(configuration);
-            var authService = new DesafioTecnico.Infrastructure.Services.AuthService(context, tokenGenerator, Microsoft.Extensions.Logging.Abstractions.NullLogger<DesafioTecnico.Infrastructure.Services.AuthService>.Instance);
-
-            var result = await authService.AuthenticateAsync("admin", "wrongpassword");
             Assert.Null(result);
         }
 
         [Fact]
-        public async Task Authenticate_ReturnsNull_WhenUserNotFound()
+        public async Task Autenticar_DeveRetornarNull_QuandoUsuarioNaoEncontrado()
         {
-            var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestAuthDb_NoUser")
-                .Options;
+            var service = BuildSut("TestAuthDb_NoUser", out _);
 
-            using var context = new AppDbContext(options);
+            var result = await service.AuthenticateAsync("nonexistent", "secret");
 
-            var inMemorySettings = new Dictionary<string, string>
-            {
-                { "Jwt:Key", "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF" },
-                { "Jwt:Issuer", "tests" },
-                { "Jwt:Audience", "tests" },
-                { "Jwt:ExpiryMinutes", "60" }
-            };
-
-            var configuration = new ConfigurationBuilder().AddInMemoryCollection(inMemorySettings).Build();
-
-            var tokenGenerator = new DesafioTecnico.Infrastructure.Security.JwtTokenGenerator(configuration);
-            var authService = new DesafioTecnico.Infrastructure.Services.AuthService(context, tokenGenerator, Microsoft.Extensions.Logging.Abstractions.NullLogger<DesafioTecnico.Infrastructure.Services.AuthService>.Instance);
-
-            var result = await authService.AuthenticateAsync("nonexistent", "secret");
             Assert.Null(result);
         }
     }

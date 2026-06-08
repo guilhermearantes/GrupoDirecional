@@ -139,6 +139,33 @@ namespace Tests.Services
         }
 
         [Fact]
+        public async Task Confirmar_DeveRetornarFalha_QuandoApartamentoDaReservaNaoEncontrado()
+        {
+            var (context, _, service) = BuildSut("TestDb_ConfirmReserva_AptNotFound");
+
+            var cliente = Fixtures.FakeDataBuilder.CreateCliente();
+            context.Clientes.Add(cliente);
+
+            // Reserva aponta para um ApartamentoId que não existe no banco
+            var reserva = new DesafioTecnico.Domain.Entities.Reserva
+            {
+                Id = Guid.NewGuid(),
+                ClienteId = cliente.Id,
+                ApartamentoId = Guid.NewGuid(),
+                DataReserva = DateTime.UtcNow,
+                Status = DesafioTecnico.Domain.Enums.StatusReserva.Pendente
+            };
+            context.Reservas.Add(reserva);
+            context.SaveChanges();
+
+            var result = await service.ConfirmAsync(reserva.Id);
+
+            Assert.True(result.IsFailure);
+            Assert.NotEmpty(result.Error);
+            context.Dispose();
+        }
+
+        [Fact]
         public async Task Confirmar_DeveCriarVenda_EMudarApartamentoParaVendido()
         {
             var (context, uow, service) = BuildSut("TestDb_ConfirmReserva");

@@ -4,7 +4,6 @@ using DesafioTecnico.Api.Controllers;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
 using DesafioTecnico.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
-using Xunit;
 
 namespace Tests.Controllers
 {
@@ -32,6 +31,17 @@ namespace Tests.Controllers
 
             Assert.NotNull(result);
             _serviceMock.Verify();
+        }
+
+        [Fact]
+        public async Task Criar_DeveRetornarBadRequest_QuandoModeloInvalido()
+        {
+            var controller = new ClientesController(_serviceMock.Object, _mapper);
+            controller.ModelState.AddModelError("Nome", "Required");
+
+            var result = await controller.Post(new DesafioTecnico.Api.DTOs.ClienteCreateDto());
+
+            Assert.IsType<BadRequestObjectResult>(result);
         }
 
         [Fact]
@@ -71,6 +81,42 @@ namespace Tests.Controllers
 
             Assert.IsType<NoContentResult>(res);
             _serviceMock.Verify(s => s.UpdateAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task Atualizar_DeveRetornarBadRequest_QuandoModeloInvalido()
+        {
+            var controller = new ClientesController(_serviceMock.Object, _mapper);
+            controller.ModelState.AddModelError("Email", "Invalid");
+
+            var res = await controller.Put(Guid.NewGuid(), new DesafioTecnico.Api.DTOs.ClienteUpdateDto());
+
+            Assert.IsType<BadRequestObjectResult>(res);
+        }
+
+        [Fact]
+        public async Task Excluir_DeveRetornarNotFound_QuandoNaoEncontrado()
+        {
+            _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Cliente?)null);
+            var controller = new ClientesController(_serviceMock.Object, _mapper);
+
+            var res = await controller.Delete(Guid.NewGuid());
+
+            Assert.IsType<NotFoundResult>(res);
+        }
+
+        [Fact]
+        public async Task Excluir_DeveRetornarNoContent_QuandoExiste()
+        {
+            var cliente = Fixtures.FakeDataBuilder.CreateCliente();
+            _serviceMock.Setup(s => s.GetByIdAsync(cliente.Id, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+            _serviceMock.Setup(s => s.DeleteAsync(cliente.Id, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask).Verifiable();
+
+            var controller = new ClientesController(_serviceMock.Object, _mapper);
+            var res = await controller.Delete(cliente.Id);
+
+            Assert.IsType<NoContentResult>(res);
+            _serviceMock.Verify(s => s.DeleteAsync(cliente.Id, It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }
