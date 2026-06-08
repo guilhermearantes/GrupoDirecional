@@ -93,6 +93,28 @@ namespace Tests.Domain
             Assert.NotEmpty(result.Error);
         }
 
+        // ── Apartamento.EstornarVenda ─────────────────────────────────────────
+
+        [Fact]
+        public void EstornarVenda_DeveMudarStatusParaDisponivel_QuandoVendido()
+        {
+            var apt = new Apartamento { Status = StatusApartamento.Vendido };
+            var result = apt.EstornarVenda();
+            Assert.True(result.IsSuccess);
+            Assert.Equal(StatusApartamento.Disponivel, apt.Status);
+        }
+
+        [Theory]
+        [InlineData(StatusApartamento.Disponivel)]
+        [InlineData(StatusApartamento.Reservado)]
+        public void EstornarVenda_DeveRetornarFalha_QuandoNaoVendido(StatusApartamento status)
+        {
+            var apt = new Apartamento { Status = status };
+            var result = apt.EstornarVenda();
+            Assert.True(result.IsFailure);
+            Assert.NotEmpty(result.Error);
+        }
+
         // ── Reserva.Iniciar ───────────────────────────────────────────────────
 
         [Fact]

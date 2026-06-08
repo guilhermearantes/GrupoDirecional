@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using DesafioTecnico.Infrastructure.Data;
 using DesafioTecnico.Application.Services;
 
@@ -13,7 +14,7 @@ namespace Tests.Services
                 .Options;
             var context = new AppDbContext(options);
             var uow = new UnitOfWork(context);
-            var service = new ApartamentoService(uow);
+            var service = new ApartamentoService(uow, NullLogger<ApartamentoService>.Instance);
             return (context, uow, service);
         }
 

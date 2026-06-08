@@ -1,8 +1,10 @@
 using Moq;
 using Microsoft.AspNetCore.Mvc;
 using DesafioTecnico.Api.Controllers;
+using DesafioTecnico.Api.DTOs;
 using DesafioTecnico.Application.Services.Interfaces;
 using DesafioTecnico.Domain.Entities;
+using DesafioTecnico.Domain.Enums;
 using AutoMapper;
 
 namespace Tests.Controllers
@@ -93,6 +95,44 @@ namespace Tests.Controllers
             var res = await controller.Put(apt.Id, new DesafioTecnico.Api.DTOs.ApartamentoUpdateDto()) as BadRequestObjectResult;
 
             Assert.NotNull(res);
+        }
+
+        [Fact]
+        public async Task Listar_DevePassarFiltroDeStatus_QuandoStatusInformado()
+        {
+            var apt = Fixtures.FakeDataBuilder.CreateApartamento();
+            _serviceMock
+                .Setup(s => s.GetPagedAsync(1, 20, StatusApartamento.Disponivel, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((new[] { apt }.AsEnumerable(), 1))
+                .Verifiable();
+
+            var controller = new ApartamentosController(_serviceMock.Object, _mapper);
+
+            var actionResult = await controller.Get(status: "Disponivel");
+            var result = actionResult.Result as OkObjectResult;
+
+            Assert.NotNull(result);
+            var paged = result.Value as PagedResult<ApartamentoReadDto>;
+            Assert.NotNull(paged);
+            Assert.Single(paged.Items);
+            _serviceMock.Verify(s => s.GetPagedAsync(1, 20, StatusApartamento.Disponivel, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task Listar_DevePassarStatusNulo_QuandoStatusNaoInformado()
+        {
+            _serviceMock
+                .Setup(s => s.GetPagedAsync(1, 20, null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Enumerable.Empty<Apartamento>(), 0))
+                .Verifiable();
+
+            var controller = new ApartamentosController(_serviceMock.Object, _mapper);
+
+            var actionResult = await controller.Get();
+            var result = actionResult.Result as OkObjectResult;
+
+            Assert.NotNull(result);
+            _serviceMock.Verify(s => s.GetPagedAsync(1, 20, null, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
