@@ -10,6 +10,7 @@ namespace DesafioTecnico.Infrastructure.Services.Interfaces
     {
         Task<IEnumerable<Reserva>> GetAllAsync(CancellationToken ct = default);
         Task<Reserva?> GetByIdAsync(Guid id, CancellationToken ct = default);
+        Task<(IEnumerable<Reserva> Items, int Total)> GetPagedAsync(int page, int pageSize, CancellationToken ct = default);
 
         /// <summary>
         /// Cria uma nova reserva para um apartamento disponível, alterando seu status para Reservado.

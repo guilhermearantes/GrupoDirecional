@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using DesafioTecnico.Domain.Entities;
+using DesafioTecnico.Domain.Enums;
 using DesafioTecnico.Infrastructure.Data;
 using DesafioTecnico.Infrastructure.Repositories.Interfaces;
 
@@ -16,6 +17,18 @@ namespace DesafioTecnico.Infrastructure.Repositories
 
         public Task<Apartamento?> GetByIdAsync(Guid id, CancellationToken ct = default)
             => _context.Apartamentos.FindAsync([id], ct).AsTask();
+
+        public Task<int> CountAsync(StatusApartamento? status = null, CancellationToken ct = default)
+            => status.HasValue
+                ? _context.Apartamentos.CountAsync(a => a.Status == status.Value, ct)
+                : _context.Apartamentos.CountAsync(ct);
+
+        public async Task<IEnumerable<Apartamento>> GetPagedAsync(int skip, int take, StatusApartamento? status = null, CancellationToken ct = default)
+        {
+            var query = _context.Apartamentos.AsNoTracking();
+            if (status.HasValue) query = query.Where(a => a.Status == status.Value);
+            return await query.Skip(skip).Take(take).ToListAsync(ct);
+        }
 
         public async Task AddAsync(Apartamento apt, CancellationToken ct = default)
             => await _context.Apartamentos.AddAsync(apt, ct);

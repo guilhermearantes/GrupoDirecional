@@ -17,6 +17,12 @@ namespace DesafioTecnico.Infrastructure.Repositories
         public Task<Venda?> GetByIdAsync(Guid id, CancellationToken ct = default)
             => _context.Vendas.FindAsync([id], ct).AsTask();
 
+        public Task<int> CountAsync(CancellationToken ct = default)
+            => _context.Vendas.CountAsync(ct);
+
+        public async Task<IEnumerable<Venda>> GetPagedAsync(int skip, int take, CancellationToken ct = default)
+            => await _context.Vendas.AsNoTracking().Skip(skip).Take(take).ToListAsync(ct);
+
         public async Task AddAsync(Venda venda, CancellationToken ct = default)
             => await _context.Vendas.AddAsync(venda, ct);
 

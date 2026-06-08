@@ -230,6 +230,32 @@ namespace Tests.Services
         }
 
         [Fact]
+        public async Task Deletar_DeveLiberarApartamento_QuandoReservaPendente()
+        {
+            var (context, uow, service) = BuildSut("TestDb_DeleteReserva_PendenteLibera");
+
+            var cliente = Fixtures.FakeDataBuilder.CreateCliente();
+            var apt = Fixtures.FakeDataBuilder.CreateApartamento();
+            context.Clientes.Add(cliente);
+            context.Apartamentos.Add(apt);
+            context.SaveChanges();
+
+            var reserva = new DesafioTecnico.Domain.Entities.Reserva { ClienteId = cliente.Id, ApartamentoId = apt.Id };
+            var created = await service.CreateAsync(reserva);
+            Assert.True(created.IsSuccess);
+
+            await service.DeleteAsync(created.Value.Id);
+
+            var aptApos = await uow.Apartamentos.GetByIdAsync(apt.Id);
+            Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Disponivel, aptApos!.Status);
+
+            var reservaApos = await uow.Reservas.GetByIdAsync(created.Value.Id);
+            Assert.Null(reservaApos);
+
+            context.Dispose();
+        }
+
+        [Fact]
         public async Task Cancelar_DeveDevolverApartamentoParaDisponivel_EMudarStatusParaCancelada()
         {
             var (context, uow, service) = BuildSut("TestDb_CancelReserva");

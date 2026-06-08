@@ -1,4 +1,5 @@
 using DesafioTecnico.Domain.Entities;
+using DesafioTecnico.Domain.Enums;
 using DesafioTecnico.Infrastructure.Data;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
 
@@ -15,6 +16,14 @@ namespace DesafioTecnico.Infrastructure.Services
 
         public Task<Apartamento?> GetByIdAsync(Guid id, CancellationToken ct = default)
             => _uow.Apartamentos.GetByIdAsync(id, ct);
+
+        public async Task<(IEnumerable<Apartamento> Items, int Total)> GetPagedAsync(int page, int pageSize, StatusApartamento? status = null, CancellationToken ct = default)
+        {
+            var skip = (page - 1) * pageSize;
+            var total = await _uow.Apartamentos.CountAsync(status, ct);
+            var items = await _uow.Apartamentos.GetPagedAsync(skip, pageSize, status, ct);
+            return (items, total);
+        }
 
         public async Task<Apartamento> CreateAsync(Apartamento apt, CancellationToken ct = default)
         {

@@ -38,10 +38,8 @@ namespace DesafioTecnico.Api.Controllers
         {
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = 20;
-            var all = await _service.GetAllAsync(ct);
-            var list = all.ToList();
-            var items = list.Skip((page - 1) * pageSize).Take(pageSize);
-            return Ok(new PagedResult<ClienteReadDto>(_mapper.Map<IEnumerable<ClienteReadDto>>(items), page, pageSize, list.Count));
+            var (items, total) = await _service.GetPagedAsync(page, pageSize, ct);
+            return Ok(new PagedResult<ClienteReadDto>(_mapper.Map<IEnumerable<ClienteReadDto>>(items), page, pageSize, total));
         }
 
         /// <summary>Retorna um cliente pelo identificador único.</summary>
@@ -102,14 +100,23 @@ namespace DesafioTecnico.Api.Controllers
         }
 
         /// <summary>Remove um cliente pelo identificador único.</summary>
+        /// <remarks>Retorna 409 se o cliente possuir reservas ou vendas associadas.</remarks>
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<ActionResult> Delete(Guid id, CancellationToken ct = default)
         {
             var existing = await _service.GetByIdAsync(id, ct);
             if (existing == null) return NotFound();
-            await _service.DeleteAsync(id, ct);
+            try
+            {
+                await _service.DeleteAsync(id, ct);
+            }
+            catch (DbUpdateException)
+            {
+                return Conflict(new { error = "Não é possível excluir um cliente com reservas ou vendas associadas." });
+            }
             return NoContent();
         }
     }

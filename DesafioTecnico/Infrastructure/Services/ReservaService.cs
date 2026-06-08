@@ -24,6 +24,14 @@ namespace DesafioTecnico.Infrastructure.Services
         public Task<Reserva?> GetByIdAsync(Guid id, CancellationToken ct = default)
             => _uow.Reservas.GetByIdAsync(id, ct);
 
+        public async Task<(IEnumerable<Reserva> Items, int Total)> GetPagedAsync(int page, int pageSize, CancellationToken ct = default)
+        {
+            var skip = (page - 1) * pageSize;
+            var total = await _uow.Reservas.CountAsync(ct);
+            var items = await _uow.Reservas.GetPagedAsync(skip, pageSize, ct);
+            return (items, total);
+        }
+
         public async Task<Result<Reserva>> CreateAsync(Reserva reserva, CancellationToken ct = default)
         {
             var cliente = await _uow.Clientes.GetByIdAsync(reserva.ClienteId, ct);
@@ -99,8 +107,22 @@ namespace DesafioTecnico.Infrastructure.Services
 
         public async Task DeleteAsync(Guid id, CancellationToken ct = default)
         {
+            var reserva = await _uow.Reservas.GetByIdAsync(id, ct);
+            if (reserva == null) return;
+
+            if (reserva.Status == Domain.Enums.StatusReserva.Pendente)
+            {
+                var apt = await _uow.Apartamentos.GetByIdAsync(reserva.ApartamentoId, ct);
+                if (apt != null)
+                {
+                    apt.Liberar();
+                    await _uow.Apartamentos.UpdateAsync(apt, ct);
+                }
+            }
+
             await _uow.Reservas.DeleteAsync(id, ct);
             await _uow.CommitAsync(ct);
+            _logger.LogInformation("Reserva {ReservaId} removida", id);
         }
     }
 }

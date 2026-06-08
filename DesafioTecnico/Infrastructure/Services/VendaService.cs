@@ -24,6 +24,14 @@ namespace DesafioTecnico.Infrastructure.Services
         public Task<Venda?> GetByIdAsync(Guid id, CancellationToken ct = default)
             => _uow.Vendas.GetByIdAsync(id, ct);
 
+        public async Task<(IEnumerable<Venda> Items, int Total)> GetPagedAsync(int page, int pageSize, CancellationToken ct = default)
+        {
+            var skip = (page - 1) * pageSize;
+            var total = await _uow.Vendas.CountAsync(ct);
+            var items = await _uow.Vendas.GetPagedAsync(skip, pageSize, ct);
+            return (items, total);
+        }
+
         public async Task<Result<Venda>> CreateAsync(Venda venda, CancellationToken ct = default)
         {
             var cliente = await _uow.Clientes.GetByIdAsync(venda.ClienteId, ct);

@@ -38,10 +38,8 @@ namespace DesafioTecnico.Api.Controllers
         {
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = 20;
-            var all = await _vendaService.GetAllAsync(ct);
-            var list = all.ToList();
-            var items = list.Skip((page - 1) * pageSize).Take(pageSize);
-            return Ok(new PagedResult<VendaReadDto>(_mapper.Map<IEnumerable<VendaReadDto>>(items), page, pageSize, list.Count));
+            var (items, total) = await _vendaService.GetPagedAsync(page, pageSize, ct);
+            return Ok(new PagedResult<VendaReadDto>(_mapper.Map<IEnumerable<VendaReadDto>>(items), page, pageSize, total));
         }
 
         /// <summary>Retorna uma venda pelo identificador único.</summary>

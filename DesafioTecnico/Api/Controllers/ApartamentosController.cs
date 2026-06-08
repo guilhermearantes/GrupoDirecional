@@ -41,13 +41,11 @@ namespace DesafioTecnico.Api.Controllers
         {
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = 20;
-            var all = await _service.GetAllAsync(ct);
-            var filtered = string.IsNullOrEmpty(status) || !Enum.TryParse<StatusApartamento>(status, ignoreCase: true, out var statusEnum)
-                ? all
-                : all.Where(a => a.Status == statusEnum);
-            var list = filtered.ToList();
-            var items = list.Skip((page - 1) * pageSize).Take(pageSize);
-            return Ok(new PagedResult<ApartamentoReadDto>(_mapper.Map<IEnumerable<ApartamentoReadDto>>(items), page, pageSize, list.Count));
+            StatusApartamento? statusEnum = null;
+            if (!string.IsNullOrEmpty(status) && Enum.TryParse<StatusApartamento>(status, ignoreCase: true, out var parsed))
+                statusEnum = parsed;
+            var (items, total) = await _service.GetPagedAsync(page, pageSize, statusEnum, ct);
+            return Ok(new PagedResult<ApartamentoReadDto>(_mapper.Map<IEnumerable<ApartamentoReadDto>>(items), page, pageSize, total));
         }
 
         /// <summary>Retorna um apartamento pelo identificador único.</summary>

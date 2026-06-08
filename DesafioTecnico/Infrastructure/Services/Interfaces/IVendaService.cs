@@ -10,6 +10,7 @@ namespace DesafioTecnico.Infrastructure.Services.Interfaces
     {
         Task<IEnumerable<Venda>> GetAllAsync(CancellationToken ct = default);
         Task<Venda?> GetByIdAsync(Guid id, CancellationToken ct = default);
+        Task<(IEnumerable<Venda> Items, int Total)> GetPagedAsync(int page, int pageSize, CancellationToken ct = default);
 
         /// <summary>
         /// Registra uma venda direta para um apartamento disponível, alterando seu status para Vendido.
