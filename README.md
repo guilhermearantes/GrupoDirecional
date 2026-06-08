@@ -107,7 +107,7 @@ A ordem abaixo respeita as dependências entre entidades:
 | 1 | `POST /api/clientes` | Cadastrar um cliente |
 | 2 | `POST /api/apartamentos` | Cadastrar um apartamento (status inicial: `Disponivel`) |
 | 3 | `POST /api/reservas` | Reservar o apartamento para o cliente |
-| 4a | `POST /api/reservas/{id}/confirm` | Confirmar a reserva → gera venda automaticamente e marca apartamento como `Vendido` |
+| 4a | `POST /api/reservas/{id}/confirm` | Confirmar a reserva → gera venda automaticamente, marca apartamento como `Vendido`; retorna `201 Created` com header `Location` apontando para a venda criada |
 | 4b | `POST /api/reservas/{id}/cancel` | Ou cancelar → devolve apartamento para `Disponivel` |
 | 5 | `POST /api/vendas` | Alternativa: venda direta sem reserva prévia |
 
@@ -173,7 +173,7 @@ A ordem abaixo respeita as dependências entre entidades:
 | GET    | /api/reservas                 | Listar reservas (paginado)                   | Sim  |
 | GET    | /api/reservas/{id}            | Obter reserva por ID                         | Sim  |
 | POST   | /api/reservas                 | Criar reserva (→ apartamento Reservado)      | Sim  |
-| POST   | /api/reservas/{id}/confirm    | Confirmar reserva (→ gera venda + Vendido)   | Sim  |
+| POST   | /api/reservas/{id}/confirm    | Confirmar reserva (→ gera venda + Vendido); retorna `201 Created` com `Location` para a venda criada | Sim  |
 | POST   | /api/reservas/{id}/cancel     | Cancelar reserva (→ apartamento Disponivel)  | Sim  |
 | DELETE | /api/reservas/{id}            | Remover reserva                              | Sim  |
 | GET    | /api/vendas                   | Listar vendas (paginado)                     | Sim  |
@@ -265,14 +265,18 @@ Para desenvolvimento rápido sem precisar do SQL Server, a API usa **SQLite auto
 dotnet run --project DesafioTecnico
 ```
 
-A API sobe em `https://localhost:5001` / `http://localhost:5000`.  
-O banco SQLite é criado em memória na primeira execução com seed automático do usuário `admin`.
+A API sobe em `http://localhost:5160`.  
+O banco SQLite é criado como arquivo `desafio_dev.db` na primeira execução com seed automático do usuário `admin`. Para resetar os dados entre execuções, delete o arquivo e reinicie.
 
 > **Nota:** SQLite não suporta todas as funcionalidades do SQL Server. Para validar comportamentos de produção, use o docker-compose.
 
 ---
 
 ## Fluxo completo do cenário (exemplos curl)
+
+> **Pré-requisito:** Os exemplos usam [`jq`](https://jqlang.org) para extrair campos do JSON. Instale com `brew install jq` (macOS/Linux) ou `winget install stedolan.jq` (Windows).
+
+> **Porta:** Os exemplos usam a porta `8080` (Docker Compose). Se estiver rodando localmente com `dotnet run`, substitua `http://localhost:8080` por `http://localhost:5160`.
 
 ### 1. Autenticação — gerar token JWT
 
@@ -317,6 +321,9 @@ curl -s "http://localhost:8080/api/apartamentos?status=Disponivel" \
   -H "Authorization: Bearer $TOKEN" \
   | jq '.items'
 
+# Nota: o apartamento de demonstração A-101 persiste entre execuções.
+# Se já estiver Vendido/Reservado, crie um novo via POST /api/apartamentos antes de continuar.
+
 # Obter o ID do primeiro apartamento disponível
 APT_ID=$(curl -s "http://localhost:8080/api/apartamentos?status=Disponivel" \
   -H "Authorization: Bearer $TOKEN" \
@@ -343,11 +350,14 @@ echo "Reserva ID: $RESERVA_ID"
 ### 5. Confirmar reserva → venda definitiva
 
 ```bash
-curl -s -X POST http://localhost:8080/api/reservas/$RESERVA_ID/confirm \
+curl -si -X POST http://localhost:8080/api/reservas/$RESERVA_ID/confirm \
   -H "Authorization: Bearer $TOKEN"
 
+# Resposta: 201 Created
+# Location: http://localhost:8080/api/Vendas/{venda-id}
+#
 # O sistema automaticamente:
-# - Cria uma Venda associada ao cliente e apartamento
+# - Cria uma Venda e retorna sua URL no header Location
 # - Atualiza o status do apartamento para "Vendido"
 # - Atualiza o status da reserva para "Confirmada"
 ```
