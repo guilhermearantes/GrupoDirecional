@@ -46,5 +46,13 @@ namespace DesafioTecnico.Domain.Entities
             Status = Enums.StatusApartamento.Disponivel;
             return Result.Ok();
         }
+
+        public Result EstornarVenda()
+        {
+            if (Status != Enums.StatusApartamento.Vendido)
+                return Result.Fail("Somente apartamentos vendidos podem ser estornados.");
+            Status = Enums.StatusApartamento.Disponivel;
+            return Result.Ok();
+        }
     }
 }

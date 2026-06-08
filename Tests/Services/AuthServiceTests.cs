@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging.Abstractions;
 using DesafioTecnico.Infrastructure.Data;
 using DesafioTecnico.Infrastructure.Security;
@@ -16,18 +16,14 @@ namespace Tests.Services
                 .Options;
             context = new AppDbContext(options);
 
-            var config = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    ["Jwt:Key"]           = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
-                    ["Jwt:Issuer"]        = "tests",
-                    ["Jwt:Audience"]      = "tests",
-                    ["Jwt:ExpiryMinutes"] = "60"
-                })
-                .Build();
-
             var uow = new UnitOfWork(context);
-            var tokenGenerator = new JwtTokenGenerator(config);
+            var tokenGenerator = new JwtTokenGenerator(Options.Create(new JwtSettings
+            {
+                Key = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
+                Issuer = "tests",
+                Audience = "tests",
+                ExpiryMinutes = 60
+            }));
             return new AuthService(uow, tokenGenerator, NullLogger<AuthService>.Instance);
         }
 

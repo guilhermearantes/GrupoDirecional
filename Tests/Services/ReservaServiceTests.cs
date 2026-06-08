@@ -256,6 +256,32 @@ namespace Tests.Services
         }
 
         [Fact]
+        public async Task Deletar_DeveRetornarFalha_QuandoReservaConfirmada()
+        {
+            var (context, uow, service) = BuildSut("TestDb_DeleteReserva_ConfirmadaBloqueada");
+
+            var cliente = Fixtures.FakeDataBuilder.CreateCliente();
+            var apt = Fixtures.FakeDataBuilder.CreateApartamento();
+            context.Clientes.Add(cliente);
+            context.Apartamentos.Add(apt);
+            context.SaveChanges();
+
+            var reserva = new DesafioTecnico.Domain.Entities.Reserva { ClienteId = cliente.Id, ApartamentoId = apt.Id };
+            var created = await service.CreateAsync(reserva);
+            Assert.True(created.IsSuccess);
+            await service.ConfirmAsync(created.Value.Id);
+
+            var result = await service.DeleteAsync(created.Value.Id);
+
+            Assert.True(result.IsFailure);
+            Assert.NotEmpty(result.Error);
+            var reservaApos = await uow.Reservas.GetByIdAsync(created.Value.Id);
+            Assert.NotNull(reservaApos);
+
+            context.Dispose();
+        }
+
+        [Fact]
         public async Task Cancelar_DeveDevolverApartamentoParaDisponivel_EMudarStatusParaCancelada()
         {
             var (context, uow, service) = BuildSut("TestDb_CancelReserva");

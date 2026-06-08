@@ -52,19 +52,19 @@ namespace DesafioTecnico.Infrastructure.Services
             return Result.Ok(reserva);
         }
 
-        public async Task<Result> ConfirmAsync(Guid id, CancellationToken ct = default)
+        public async Task<Result<Guid>> ConfirmAsync(Guid id, CancellationToken ct = default)
         {
             var reserva = await _uow.Reservas.GetByIdAsync(id, ct);
-            if (reserva == null) return Result.Fail("Reserva não encontrada.");
+            if (reserva == null) return Result.NotFound<Guid>("Reserva não encontrada.");
 
             var apt = await _uow.Apartamentos.GetByIdAsync(reserva.ApartamentoId, ct);
-            if (apt == null) return Result.Fail("Apartamento da reserva não encontrado.");
+            if (apt == null) return Result.Fail<Guid>("Apartamento da reserva não encontrado.");
 
             var confirmar = reserva.Confirmar();
-            if (confirmar.IsFailure) return confirmar;
+            if (confirmar.IsFailure) return Result.Fail<Guid>(confirmar.Error);
 
             var vender = apt.Vender();
-            if (vender.IsFailure) return vender;
+            if (vender.IsFailure) return Result.Fail<Guid>(vender.Error);
 
             var venda = VendaFactory.CriarPorReserva(reserva, apt);
 
@@ -74,13 +74,13 @@ namespace DesafioTecnico.Infrastructure.Services
             await _uow.CommitAsync(ct);
 
             _logger.LogInformation("Reserva {ReservaId} confirmada — Venda {VendaId} gerada", id, venda.Id);
-            return Result.Ok();
+            return Result.Ok(venda.Id);
         }
 
         public async Task<Result> CancelAsync(Guid id, CancellationToken ct = default)
         {
             var reserva = await _uow.Reservas.GetByIdAsync(id, ct);
-            if (reserva == null) return Result.Fail("Reserva não encontrada.");
+            if (reserva == null) return Result.NotFound("Reserva não encontrada.");
 
             var apt = await _uow.Apartamentos.GetByIdAsync(reserva.ApartamentoId, ct);
             if (apt == null) return Result.Fail("Apartamento da reserva não encontrado.");
@@ -105,24 +105,31 @@ namespace DesafioTecnico.Infrastructure.Services
             await _uow.CommitAsync(ct);
         }
 
-        public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+        public async Task<Result> DeleteAsync(Guid id, CancellationToken ct = default)
         {
             var reserva = await _uow.Reservas.GetByIdAsync(id, ct);
-            if (reserva == null) return;
+            if (reserva == null) return Result.NotFound("Reserva não encontrada.");
+
+            if (reserva.Status == Domain.Enums.StatusReserva.Confirmada)
+                return Result.Fail("Não é possível excluir uma reserva confirmada. Cancele a venda associada primeiro.");
 
             if (reserva.Status == Domain.Enums.StatusReserva.Pendente)
             {
                 var apt = await _uow.Apartamentos.GetByIdAsync(reserva.ApartamentoId, ct);
                 if (apt != null)
                 {
-                    apt.Liberar();
-                    await _uow.Apartamentos.UpdateAsync(apt, ct);
+                    var liberar = apt.Liberar();
+                    if (liberar.IsFailure)
+                        _logger.LogWarning("Apartamento {AptId} não pôde ser liberado ao excluir Reserva {ReservaId}: {Error}", reserva.ApartamentoId, id, liberar.Error);
+                    else
+                        await _uow.Apartamentos.UpdateAsync(apt, ct);
                 }
             }
 
             await _uow.Reservas.DeleteAsync(id, ct);
             await _uow.CommitAsync(ct);
             _logger.LogInformation("Reserva {ReservaId} removida", id);
+            return Result.Ok();
         }
     }
 }

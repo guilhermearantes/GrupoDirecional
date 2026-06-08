@@ -31,8 +31,14 @@ namespace DesafioTecnico.Api.Middleware
             }
         }
 
-        private static async Task WriteErrorResponse(HttpContext context, Exception ex)
+        private async Task WriteErrorResponse(HttpContext context, Exception ex)
         {
+            if (context.Response.HasStarted)
+            {
+                _logger.LogError("Response already started — cannot write error for {Method} {Path}", context.Request.Method, context.Request.Path);
+                return;
+            }
+
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = ex switch
             {

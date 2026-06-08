@@ -87,13 +87,14 @@ namespace DesafioTecnico.Api.Controllers
         /// <remarks>Em produção, prefira marcar a venda como estornada em vez de removê-la — vendas são registros contábeis. Disponível aqui por requisito do desafio.</remarks>
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Delete(Guid id, CancellationToken ct = default)
         {
             var existing = await _vendaService.GetByIdAsync(id, ct);
             if (existing == null) return NotFound();
-            await _vendaService.DeleteAsync(id, ct);
-            return NoContent();
+            var result = await _vendaService.DeleteAsync(id, ct);
+            return result.IsSuccess ? NoContent() : BadRequest(new { error = result.Error });
         }
     }
 }

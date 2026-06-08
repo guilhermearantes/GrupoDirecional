@@ -20,9 +20,9 @@ namespace DesafioTecnico.Infrastructure.Services.Interfaces
 
         /// <summary>
         /// Confirma uma reserva pendente, gera a venda correspondente e marca o apartamento como Vendido.
-        /// Retorna <see cref="Result"/> com falha se a reserva não existir ou não estiver no estado Pendente.
+        /// Retorna <see cref="Result{T}"/> com o ID da venda criada, ou falha se a reserva não existir ou não estiver no estado Pendente.
         /// </summary>
-        Task<Result> ConfirmAsync(Guid id, CancellationToken ct = default);
+        Task<Result<Guid>> ConfirmAsync(Guid id, CancellationToken ct = default);
 
         /// <summary>
         /// Cancela uma reserva pendente e devolve o apartamento ao status Disponível.
@@ -31,6 +31,6 @@ namespace DesafioTecnico.Infrastructure.Services.Interfaces
         Task<Result> CancelAsync(Guid id, CancellationToken ct = default);
 
         Task UpdateAsync(Reserva reserva, CancellationToken ct = default);
-        Task DeleteAsync(Guid id, CancellationToken ct = default);
+        Task<Result> DeleteAsync(Guid id, CancellationToken ct = default);
     }
 }

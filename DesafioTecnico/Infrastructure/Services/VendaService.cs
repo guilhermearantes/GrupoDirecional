@@ -59,10 +59,25 @@ namespace DesafioTecnico.Infrastructure.Services
             await _uow.CommitAsync(ct);
         }
 
-        public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+        public async Task<Result> DeleteAsync(Guid id, CancellationToken ct = default)
         {
+            var venda = await _uow.Vendas.GetByIdAsync(id, ct);
+            if (venda == null) return Result.NotFound("Venda não encontrada.");
+
+            var apt = await _uow.Apartamentos.GetByIdAsync(venda.ApartamentoId, ct);
+            if (apt != null)
+            {
+                var estornar = apt.EstornarVenda();
+                if (estornar.IsFailure)
+                    _logger.LogWarning("Apartamento {AptId} não estava Vendido ao remover Venda {VendaId}: {Error}", venda.ApartamentoId, id, estornar.Error);
+                else
+                    await _uow.Apartamentos.UpdateAsync(apt, ct);
+            }
+
             await _uow.Vendas.DeleteAsync(id, ct);
             await _uow.CommitAsync(ct);
+            _logger.LogInformation("Venda {VendaId} removida", id);
+            return Result.Ok();
         }
     }
 }

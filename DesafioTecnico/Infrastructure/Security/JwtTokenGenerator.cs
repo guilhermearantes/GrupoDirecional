@@ -1,32 +1,35 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using DesafioTecnico.Domain.Entities;
 
 namespace DesafioTecnico.Infrastructure.Security
 {
     /// <summary>
-    /// Gera tokens JWT assinados com HS256 usando as configurações <c>Jwt:Key</c>, <c>Jwt:Issuer</c>, <c>Jwt:Audience</c> e <c>Jwt:ExpiryMinutes</c>.
+    /// Gera tokens JWT assinados com HS256 usando <see cref="JwtSettings"/> injetado via IOptions.
     /// </summary>
     public class JwtTokenGenerator
     {
-        private readonly IConfiguration _config;
+        private readonly JwtSettings _settings;
 
-        public JwtTokenGenerator(IConfiguration config)
+        public JwtTokenGenerator(IOptions<JwtSettings> options)
         {
-            _config = config;
+            _settings = options.Value;
         }
 
         /// <summary>Retorna o tempo de expiração em minutos configurado em <c>Jwt:ExpiryMinutes</c> (padrão: 60).</summary>
-        public int GetExpiryMinutes() => int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
+        public int GetExpiryMinutes() => _settings.ExpiryMinutes;
 
         /// <summary>Gera um token JWT para o usuário informado com claims de Sub, NameIdentifier e Role.</summary>
         public string GenerateToken(Usuario user)
         {
-            var key = _config["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured");
-            var issuer = _config["Jwt:Issuer"];
-            var audience = _config["Jwt:Audience"];
+            var key = !string.IsNullOrEmpty(_settings.Key)
+                ? _settings.Key
+                : throw new InvalidOperationException("Jwt:Key is not configured");
+            var issuer = _settings.Issuer;
+            var audience = _settings.Audience;
             var expiryMinutes = GetExpiryMinutes();
 
             var claims = new[] {

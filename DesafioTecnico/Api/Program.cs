@@ -88,6 +88,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IVendaService, VendaService>();
 builder.Services.AddScoped<IApartamentoService, ApartamentoService>();
 builder.Services.AddScoped<JwtTokenGenerator>();
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
 // Rate limiting — máx 5 tentativas de login por minuto por IP
 builder.Services.AddRateLimiter(options =>
@@ -143,11 +144,11 @@ if (!app.Environment.IsEnvironment("IntegrationTests"))
         // OpenConnection() mantém o mesmo handle aberto para EnsureCreated e
         // SeedData compartilharem — necessário para SQLite file-based.
         var dbPath = Path.Combine(app.Environment.ContentRootPath, "desafio_dev.db");
-        if (File.Exists(dbPath))
-            File.Delete(dbPath);
-
-        db.Database.OpenConnection();
-        db.Database.EnsureCreated();
+        if (!File.Exists(dbPath))
+        {
+            db.Database.OpenConnection();
+            db.Database.EnsureCreated();
+        }
     }
     SeedData.EnsureSeedData(db);
 }

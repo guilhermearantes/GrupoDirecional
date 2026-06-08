@@ -19,6 +19,6 @@ namespace DesafioTecnico.Infrastructure.Services.Interfaces
         Task<Result<Venda>> CreateAsync(Venda venda, CancellationToken ct = default);
 
         Task UpdateAsync(Venda venda, CancellationToken ct = default);
-        Task DeleteAsync(Guid id, CancellationToken ct = default);
+        Task<Result> DeleteAsync(Guid id, CancellationToken ct = default);
     }
 }

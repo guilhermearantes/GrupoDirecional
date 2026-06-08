@@ -72,7 +72,7 @@ namespace Tests.Controllers
         [Fact]
         public async Task Confirmar_DeveRetornarBadRequest_QuandoServicoRetornaFalha()
         {
-            _serviceMock.Setup(s => s.ConfirmAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Fail("cannot confirm"));
+            _serviceMock.Setup(s => s.ConfirmAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Fail<Guid>("cannot confirm"));
             var controller = new ReservasController(_serviceMock.Object, _mapper);
 
             var res = await controller.Confirm(Guid.NewGuid()) as BadRequestObjectResult;
@@ -82,13 +82,26 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Confirmar_DeveRetornarNoContent_QuandoBemSucedido()
+        public async Task Confirmar_DeveRetornarCreated_QuandoBemSucedido()
         {
-            _serviceMock.Setup(s => s.ConfirmAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Ok());
+            var vendaId = Guid.NewGuid();
+            _serviceMock.Setup(s => s.ConfirmAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Ok(vendaId));
+            var controller = new ReservasController(_serviceMock.Object, _mapper);
+
+            var res = await controller.Confirm(Guid.NewGuid()) as CreatedAtActionResult;
+
+            Assert.NotNull(res);
+            Assert.Equal("Get", res!.ActionName);
+        }
+
+        [Fact]
+        public async Task Confirmar_DeveRetornarNotFound_QuandoNaoEncontrada()
+        {
+            _serviceMock.Setup(s => s.ConfirmAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.NotFound<Guid>("Reserva não encontrada."));
             var controller = new ReservasController(_serviceMock.Object, _mapper);
 
             var res = await controller.Confirm(Guid.NewGuid());
-            Assert.IsType<NoContentResult>(res);
+            Assert.IsType<NotFoundObjectResult>(res);
         }
 
         [Fact]
@@ -114,6 +127,16 @@ namespace Tests.Controllers
         }
 
         [Fact]
+        public async Task Cancelar_DeveRetornarNotFound_QuandoNaoEncontrada()
+        {
+            _serviceMock.Setup(s => s.CancelAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.NotFound("Reserva não encontrada."));
+            var controller = new ReservasController(_serviceMock.Object, _mapper);
+
+            var res = await controller.Cancel(Guid.NewGuid());
+            Assert.IsType<NotFoundObjectResult>(res);
+        }
+
+        [Fact]
         public async Task Excluir_DeveRetornarNotFound_QuandoNaoEncontrado()
         {
             _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Reserva?)null);
@@ -128,7 +151,7 @@ namespace Tests.Controllers
         {
             var reserva = new Reserva { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid() };
             _serviceMock.Setup(s => s.GetByIdAsync(reserva.Id, It.IsAny<CancellationToken>())).ReturnsAsync(reserva);
-            _serviceMock.Setup(s => s.DeleteAsync(reserva.Id, It.IsAny<CancellationToken>())).Returns(Task.CompletedTask).Verifiable();
+            _serviceMock.Setup(s => s.DeleteAsync(reserva.Id, It.IsAny<CancellationToken>())).ReturnsAsync(Result.Ok()).Verifiable();
 
             var controller = new ReservasController(_serviceMock.Object, _mapper);
             var res = await controller.Delete(reserva.Id);

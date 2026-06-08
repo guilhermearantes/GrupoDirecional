@@ -70,14 +70,17 @@ namespace DesafioTecnico.Api.Controllers
         /// <summary>
         /// Confirma uma reserva pendente, gera a venda correspondente e marca o apartamento como Vendido.
         /// </summary>
+        /// <returns>201 Created com Location apontando para a venda gerada.</returns>
         [HttpPost("{id}/confirm")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Confirm(Guid id, CancellationToken ct = default)
         {
             var result = await _service.ConfirmAsync(id, ct);
-            return result.IsSuccess ? NoContent() : BadRequest(new { error = result.Error });
+            if (result.IsNotFound) return NotFound(new { error = result.Error });
+            if (result.IsFailure) return BadRequest(new { error = result.Error });
+            return CreatedAtAction(nameof(VendasController.Get), "Vendas", new { id = result.Value }, null);
         }
 
         /// <summary>
@@ -90,19 +93,21 @@ namespace DesafioTecnico.Api.Controllers
         public async Task<ActionResult> Cancel(Guid id, CancellationToken ct = default)
         {
             var result = await _service.CancelAsync(id, ct);
+            if (result.IsNotFound) return NotFound(new { error = result.Error });
             return result.IsSuccess ? NoContent() : BadRequest(new { error = result.Error });
         }
 
         /// <summary>Remove uma reserva pelo identificador único.</summary>
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Delete(Guid id, CancellationToken ct = default)
         {
             var existing = await _service.GetByIdAsync(id, ct);
             if (existing == null) return NotFound();
-            await _service.DeleteAsync(id, ct);
-            return NoContent();
+            var result = await _service.DeleteAsync(id, ct);
+            return result.IsSuccess ? NoContent() : BadRequest(new { error = result.Error });
         }
     }
 }
