@@ -7,11 +7,13 @@ namespace DesafioTecnico.Api.DTOs
         /// <summary>Nome de usuário cadastrado no sistema.</summary>
         /// <example>admin</example>
         [Required]
+        [StringLength(100, MinimumLength = 3)]
         public string Username { get; set; } = string.Empty;
 
         /// <summary>Senha do usuário.</summary>
         /// <example>admin123</example>
         [Required]
+        [StringLength(72, MinimumLength = 6)]
         public string Password { get; set; } = string.Empty;
     }
 

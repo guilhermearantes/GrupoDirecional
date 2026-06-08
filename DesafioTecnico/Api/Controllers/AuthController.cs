@@ -32,7 +32,6 @@ namespace DesafioTecnico.Api.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct = default)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-
             var result = await _authService.AuthenticateAsync(request.Username, request.Password, ct);
             if (result == null) return Unauthorized();
 

@@ -89,6 +89,9 @@ builder.Services.AddScoped<IApartamentoService, ApartamentoService>();
 builder.Services.AddScoped<JwtTokenGenerator>();
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>();
+
 // Rate limiting — máx 5 tentativas de login por minuto por IP
 builder.Services.AddRateLimiter(options =>
 {
@@ -159,6 +162,7 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapHealthChecks("/health").AllowAnonymous();
 app.MapControllers();
 
 app.Run();

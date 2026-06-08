@@ -61,7 +61,6 @@ namespace DesafioTecnico.Api.Controllers
         public async Task<ActionResult> Post([FromBody] VendaCreateDto dto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-
             var entity = _mapper.Map<Venda>(dto);
             var result = await _vendaService.CreateAsync(entity, ct);
             if (result.IsFailure) return BadRequest(new { error = result.Error });

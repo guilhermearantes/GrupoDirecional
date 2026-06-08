@@ -22,6 +22,12 @@ services:
     depends_on:
       migrations:
         condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     environment:
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=DesafioTecnicoDb;User Id=sa;Password=${SA_PASSWORD:-Grup0D!reCional2026};TrustServerCertificate=True;"
       Jwt__Key: "${JWT__KEY:-very_secret_key_replace_this_long_enough_to_be_secure_and_at_least_32_chars}"

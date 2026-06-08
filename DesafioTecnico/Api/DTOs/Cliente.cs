@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using DesafioTecnico.Api.Validation;
 
 namespace DesafioTecnico.Api.DTOs
 {
@@ -47,6 +48,7 @@ namespace DesafioTecnico.Api.DTOs
         /// <summary>Data de nascimento em UTC.</summary>
         /// <example>1985-06-15T00:00:00Z</example>
         [Required]
+        [DataNascimentoValida]
         public DateTime DataNascimento { get; set; }
     }
 
