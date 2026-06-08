@@ -80,7 +80,36 @@ Todos os segredos são lidos de variáveis de ambiente — nenhum valor sensíve
 
 ## Documentação interativa (Scalar UI)
 
-Acesse `http://localhost:8080/scalar/v1` para testar todos os endpoints via interface gráfica (disponível no ambiente Development).
+Acesse `http://localhost:8080/scalar/v1` para explorar e testar todos os endpoints via interface gráfica.
+
+> Disponível apenas quando `ASPNETCORE_ENVIRONMENT=Development`. Localmente está sempre ativo; no Docker Compose está desabilitado por padrão (ambiente `Production`). Para habilitar no Docker, adicione `ASPNETCORE_ENVIRONMENT: Development` ao serviço `api` no `docker-compose.yml`.
+
+### Como autenticar
+
+1. Expanda o endpoint **POST /api/auth/login**
+2. Clique em **Send** com o body:
+```json
+{
+  "username": "admin",
+  "password": "admin123"
+}
+```
+3. Copie o valor do campo `token` da resposta
+4. Clique no botão **Authorize** (cadeado) no topo da página
+5. Cole o token no campo e confirme — todos os endpoints passam a enviar `Authorization: Bearer {token}` automaticamente
+
+### Fluxo sugerido para testes
+
+A ordem abaixo respeita as dependências entre entidades:
+
+| Passo | Endpoint | Descrição |
+|-------|----------|-----------|
+| 1 | `POST /api/clientes` | Cadastrar um cliente |
+| 2 | `POST /api/apartamentos` | Cadastrar um apartamento (status inicial: `Disponivel`) |
+| 3 | `POST /api/reservas` | Reservar o apartamento para o cliente |
+| 4a | `POST /api/reservas/{id}/confirm` | Confirmar a reserva → gera venda automaticamente e marca apartamento como `Vendido` |
+| 4b | `POST /api/reservas/{id}/cancel` | Ou cancelar → devolve apartamento para `Disponivel` |
+| 5 | `POST /api/vendas` | Alternativa: venda direta sem reserva prévia |
 
 ---
 
