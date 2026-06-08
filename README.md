@@ -17,7 +17,7 @@ API REST em .NET 9 para gerenciamento de clientes, apartamentos, reservas e vend
 | Hash de senha | BCrypt.Net-Next |
 | Mapeamento | AutoMapper 16 |
 | Documentação interativa | Scalar (OpenAPI 3) |
-| Testes unitários | xUnit · Moq · EF InMemory — 99 testes, sem dependências externas |
+| Testes unitários | xUnit · Moq · EF InMemory — 100 testes, sem dependências externas |
 | Testes de integração | xUnit · WebApplicationFactory · SQL Server real — 4 testes end-to-end |
 
 ---
@@ -171,8 +171,8 @@ A ordem abaixo respeita as dependências entre entidades:
 | DELETE | /api/clientes/{id}            | Remover cliente                              | Sim  |
 | GET    | /api/apartamentos             | Listar apartamentos (paginado; `?status=Disponivel\|Reservado\|Vendido`) | Sim  |
 | GET    | /api/apartamentos/{id}        | Obter apartamento por ID                     | Sim  |
-| POST   | /api/apartamentos             | Cadastrar apartamento                        | Sim  |
-| PUT    | /api/apartamentos/{id}        | Atualizar apartamento                        | Sim  |
+| POST   | /api/apartamentos             | Cadastrar apartamento (409 se código duplicado) | Sim  |
+| PUT    | /api/apartamentos/{id}        | Atualizar apartamento (409 se código duplicado) | Sim  |
 | DELETE | /api/apartamentos/{id}        | Remover apartamento                          | Sim  |
 | GET    | /api/reservas                 | Listar reservas (paginado)                   | Sim  |
 | GET    | /api/reservas/{id}            | Obter reserva por ID                         | Sim  |
@@ -394,7 +394,7 @@ O token expira em 60 minutos (configurável via `Jwt__ExpiryMinutes`). Após exp
 
 ### Testes unitários (sem dependências externas)
 
-99 testes de controllers e serviços usando EF Core InMemory. Não precisam de banco, Docker ou qualquer configuração adicional.
+100 testes de controllers e serviços usando EF Core InMemory. Não precisam de banco, Docker ou qualquer configuração adicional.
 
 ```bash
 dotnet test Tests/Tests.csproj --filter "Category!=Integration"

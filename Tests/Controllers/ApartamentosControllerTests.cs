@@ -1,5 +1,6 @@
 using Moq;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using DesafioTecnico.Api.Controllers;
 using DesafioTecnico.Api.DTOs;
 using DesafioTecnico.Application.Services.Interfaces;
@@ -29,6 +30,19 @@ namespace Tests.Controllers
             var result = await controller.Get(Guid.NewGuid());
 
             Assert.IsType<NotFoundResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task Criar_DeveRetornarConflict_QuandoCodigoDuplicado()
+        {
+            _serviceMock
+                .Setup(s => s.CreateAsync(It.IsAny<Apartamento>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new DbUpdateException("unique constraint", new Exception()));
+            var controller = new ApartamentosController(_serviceMock.Object, _mapper);
+
+            var res = await controller.Post(new ApartamentoCreateDto { Codigo = "AP-DUP" });
+
+            Assert.IsType<ConflictObjectResult>(res);
         }
 
         [Fact]
