@@ -114,12 +114,12 @@ namespace Tests.Controllers
         [Fact]
         public async Task Excluir_DeveRetornarNotFound_QuandoNaoEncontrado()
         {
-            _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Venda?)null);
+            _serviceMock.Setup(s => s.DeleteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.NotFound("Venda não encontrada."));
             var controller = new VendasController(_serviceMock.Object, _mapper);
 
             var res = await controller.Delete(Guid.NewGuid());
 
-            Assert.IsType<NotFoundResult>(res);
+            Assert.IsType<NotFoundObjectResult>(res);
         }
 
         [Fact]

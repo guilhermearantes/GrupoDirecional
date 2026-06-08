@@ -90,9 +90,8 @@ namespace DesafioTecnico.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Delete(Guid id, CancellationToken ct = default)
         {
-            var existing = await _vendaService.GetByIdAsync(id, ct);
-            if (existing == null) return NotFound();
             var result = await _vendaService.DeleteAsync(id, ct);
+            if (result.IsNotFound) return NotFound(new { error = result.Error });
             return result.IsSuccess ? NoContent() : BadRequest(new { error = result.Error });
         }
     }
