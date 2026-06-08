@@ -64,15 +64,9 @@ namespace DesafioTecnico.Api.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var entity = _mapper.Map<DesafioTecnico.Domain.Entities.Venda>(dto);
-            try
-            {
-                var created = await _vendaService.CreateAsync(entity, ct);
-                return CreatedAtAction(nameof(Get), new { id = created.Id }, _mapper.Map<VendaReadDto>(created));
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            var result = await _vendaService.CreateAsync(entity, ct);
+            if (result.IsFailure) return BadRequest(new { error = result.Error });
+            return CreatedAtAction(nameof(Get), new { id = result.Value.Id }, _mapper.Map<VendaReadDto>(result.Value));
         }
 
         /// <summary>Atualiza o valor pago de uma venda existente.</summary>

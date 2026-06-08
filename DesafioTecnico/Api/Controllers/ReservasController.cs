@@ -63,8 +63,9 @@ namespace DesafioTecnico.Api.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var entity = _mapper.Map<DesafioTecnico.Domain.Entities.Reserva>(dto);
-            await _service.CreateAsync(entity, ct);
-            return CreatedAtAction(nameof(Get), new { id = entity.Id }, _mapper.Map<ReservaReadDto>(entity));
+            var result = await _service.CreateAsync(entity, ct);
+            if (result.IsFailure) return BadRequest(new { error = result.Error });
+            return CreatedAtAction(nameof(Get), new { id = result.Value.Id }, _mapper.Map<ReservaReadDto>(result.Value));
         }
 
         /// <summary>
@@ -76,15 +77,8 @@ namespace DesafioTecnico.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Confirm(Guid id, CancellationToken ct = default)
         {
-            try
-            {
-                await _service.ConfirmAsync(id, ct);
-                return NoContent();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            var result = await _service.ConfirmAsync(id, ct);
+            return result.IsSuccess ? NoContent() : BadRequest(new { error = result.Error });
         }
 
         /// <summary>
@@ -96,15 +90,8 @@ namespace DesafioTecnico.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Cancel(Guid id, CancellationToken ct = default)
         {
-            try
-            {
-                await _service.CancelAsync(id, ct);
-                return NoContent();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            var result = await _service.CancelAsync(id, ct);
+            return result.IsSuccess ? NoContent() : BadRequest(new { error = result.Error });
         }
 
         /// <summary>Remove uma reserva pelo identificador único.</summary>

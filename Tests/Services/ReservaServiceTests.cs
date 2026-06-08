@@ -35,17 +35,18 @@ namespace Tests.Services
                 ApartamentoId = apt.Id
             };
 
-            var created = await service.CreateAsync(reserva);
+            var result = await service.CreateAsync(reserva);
 
+            Assert.True(result.IsSuccess);
             var updatedApt = await uow.Apartamentos.GetByIdAsync(apt.Id);
             Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Reservado, updatedApt!.Status);
-            Assert.Equal(reserva.Id, created.Id);
+            Assert.Equal(reserva.Id, result.Value.Id);
 
             context.Dispose();
         }
 
         [Fact]
-        public async Task Criar_DeveLancarExcecao_QuandoApartamentoNaoDisponivel()
+        public async Task Criar_DeveRetornarFalha_QuandoApartamentoNaoDisponivel()
         {
             var (context, _, service) = BuildSut("TestDb_CreateReserva_NotAvailable");
 
@@ -62,21 +63,27 @@ namespace Tests.Services
                 ApartamentoId = apt.Id
             };
 
-            await Assert.ThrowsAsync<InvalidOperationException>(async () => await service.CreateAsync(reserva));
+            var result = await service.CreateAsync(reserva);
+
+            Assert.True(result.IsFailure);
+            Assert.NotEmpty(result.Error);
             context.Dispose();
         }
 
         [Fact]
-        public async Task Confirmar_DeveLancarExcecao_QuandoReservaNaoEncontrada()
+        public async Task Confirmar_DeveRetornarFalha_QuandoReservaNaoEncontrada()
         {
             var (context, _, service) = BuildSut("TestDb_ConfirmReserva_NotFound");
 
-            await Assert.ThrowsAsync<InvalidOperationException>(async () => await service.ConfirmAsync(Guid.NewGuid()));
+            var result = await service.ConfirmAsync(Guid.NewGuid());
+
+            Assert.True(result.IsFailure);
+            Assert.NotEmpty(result.Error);
             context.Dispose();
         }
 
         [Fact]
-        public async Task Confirmar_DeveLancarExcecao_QuandoReservaJaConfirmada()
+        public async Task Confirmar_DeveRetornarFalha_QuandoReservaJaConfirmada()
         {
             var (context, _, service) = BuildSut("TestDb_ConfirmReserva_NotPending");
 
@@ -96,12 +103,15 @@ namespace Tests.Services
             context.Reservas.Add(reserva);
             context.SaveChanges();
 
-            await Assert.ThrowsAsync<InvalidOperationException>(async () => await service.ConfirmAsync(reserva.Id));
+            var result = await service.ConfirmAsync(reserva.Id);
+
+            Assert.True(result.IsFailure);
+            Assert.NotEmpty(result.Error);
             context.Dispose();
         }
 
         [Fact]
-        public async Task Cancelar_DeveLancarExcecao_QuandoReservaJaConfirmada()
+        public async Task Cancelar_DeveRetornarFalha_QuandoReservaJaConfirmada()
         {
             var (context, _, service) = BuildSut("TestDb_CancelReserva_NotPending");
 
@@ -121,7 +131,10 @@ namespace Tests.Services
             context.Reservas.Add(reserva);
             context.SaveChanges();
 
-            await Assert.ThrowsAsync<InvalidOperationException>(async () => await service.CancelAsync(reserva.Id));
+            var result = await service.CancelAsync(reserva.Id);
+
+            Assert.True(result.IsFailure);
+            Assert.NotEmpty(result.Error);
             context.Dispose();
         }
 
@@ -143,7 +156,10 @@ namespace Tests.Services
             };
 
             var created = await service.CreateAsync(reserva);
-            await service.ConfirmAsync(created.Id);
+            Assert.True(created.IsSuccess);
+
+            var confirm = await service.ConfirmAsync(created.Value.Id);
+            Assert.True(confirm.IsSuccess);
 
             var updatedApt = await uow.Apartamentos.GetByIdAsync(apt.Id);
             Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Vendido, updatedApt!.Status);
@@ -152,7 +168,7 @@ namespace Tests.Services
             var venda = vendas.FirstOrDefault(v => v.ApartamentoId == apt.Id && v.ClienteId == cliente.Id);
             Assert.NotNull(venda);
 
-            var updatedReserva = await uow.Reservas.GetByIdAsync(created.Id);
+            var updatedReserva = await uow.Reservas.GetByIdAsync(created.Value.Id);
             Assert.Equal(DesafioTecnico.Domain.Enums.StatusReserva.Confirmada, updatedReserva!.Status);
 
             context.Dispose();
@@ -176,12 +192,15 @@ namespace Tests.Services
             };
 
             var created = await service.CreateAsync(reserva);
-            await service.CancelAsync(created.Id);
+            Assert.True(created.IsSuccess);
+
+            var cancel = await service.CancelAsync(created.Value.Id);
+            Assert.True(cancel.IsSuccess);
 
             var updatedApt = await uow.Apartamentos.GetByIdAsync(apt.Id);
             Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Disponivel, updatedApt!.Status);
 
-            var updatedReserva = await uow.Reservas.GetByIdAsync(created.Id);
+            var updatedReserva = await uow.Reservas.GetByIdAsync(created.Value.Id);
             Assert.Equal(DesafioTecnico.Domain.Enums.StatusReserva.Cancelada, updatedReserva!.Status);
 
             context.Dispose();

@@ -1,4 +1,5 @@
 using DesafioTecnico.Domain.Entities;
+using DesafioTecnico.Domain.Results;
 
 namespace DesafioTecnico.Infrastructure.Services.Interfaces
 {
@@ -12,27 +13,21 @@ namespace DesafioTecnico.Infrastructure.Services.Interfaces
 
         /// <summary>
         /// Cria uma nova reserva para um apartamento disponível, alterando seu status para Reservado.
+        /// Retorna <see cref="Result{T}"/> com falha se o apartamento não existir ou não estiver disponível.
         /// </summary>
-        /// <exception cref="InvalidOperationException">
-        /// Lançada quando o apartamento não existe ou não está disponível.
-        /// </exception>
-        Task<Reserva> CreateAsync(Reserva reserva, CancellationToken ct = default);
+        Task<Result<Reserva>> CreateAsync(Reserva reserva, CancellationToken ct = default);
 
         /// <summary>
         /// Confirma uma reserva pendente, gera a venda correspondente e marca o apartamento como Vendido.
+        /// Retorna <see cref="Result"/> com falha se a reserva não existir ou não estiver no estado Pendente.
         /// </summary>
-        /// <exception cref="InvalidOperationException">
-        /// Lançada quando a reserva não existe ou não está no estado Pendente.
-        /// </exception>
-        Task ConfirmAsync(Guid id, CancellationToken ct = default);
+        Task<Result> ConfirmAsync(Guid id, CancellationToken ct = default);
 
         /// <summary>
         /// Cancela uma reserva pendente e devolve o apartamento ao status Disponível.
+        /// Retorna <see cref="Result"/> com falha se a reserva não existir ou não estiver no estado Pendente.
         /// </summary>
-        /// <exception cref="InvalidOperationException">
-        /// Lançada quando a reserva não existe ou não está no estado Pendente.
-        /// </exception>
-        Task CancelAsync(Guid id, CancellationToken ct = default);
+        Task<Result> CancelAsync(Guid id, CancellationToken ct = default);
 
         Task UpdateAsync(Reserva reserva, CancellationToken ct = default);
         Task DeleteAsync(Guid id, CancellationToken ct = default);

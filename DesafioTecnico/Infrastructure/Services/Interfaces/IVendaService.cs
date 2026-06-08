@@ -1,4 +1,5 @@
 using DesafioTecnico.Domain.Entities;
+using DesafioTecnico.Domain.Results;
 
 namespace DesafioTecnico.Infrastructure.Services.Interfaces
 {
@@ -12,11 +13,9 @@ namespace DesafioTecnico.Infrastructure.Services.Interfaces
 
         /// <summary>
         /// Registra uma venda direta para um apartamento disponível, alterando seu status para Vendido.
+        /// Retorna <see cref="Result{T}"/> com falha se o apartamento não existir ou não estiver Disponível.
         /// </summary>
-        /// <exception cref="InvalidOperationException">
-        /// Lançada quando o apartamento não existe ou não está no status Disponível.
-        /// </exception>
-        Task<Venda> CreateAsync(Venda venda, CancellationToken ct = default);
+        Task<Result<Venda>> CreateAsync(Venda venda, CancellationToken ct = default);
 
         Task UpdateAsync(Venda venda, CancellationToken ct = default);
         Task DeleteAsync(Guid id, CancellationToken ct = default);

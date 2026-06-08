@@ -1,3 +1,5 @@
+using DesafioTecnico.Domain.Results;
+
 namespace DesafioTecnico.Domain.Entities
 {
     public class Reserva
@@ -11,9 +13,7 @@ namespace DesafioTecnico.Domain.Entities
         public Cliente? Cliente { get; set; }
         public Apartamento? Apartamento { get; set; }
 
-        /// <summary>
-        /// Inicializa a reserva com novo Id, data atual e status Pendente.
-        /// </summary>
+        /// <summary>Inicializa a reserva com novo Id, data atual e status Pendente.</summary>
         public void Iniciar()
         {
             Id = Guid.NewGuid();
@@ -21,30 +21,22 @@ namespace DesafioTecnico.Domain.Entities
             Status = Enums.StatusReserva.Pendente;
         }
 
-        /// <summary>
-        /// Confirma a reserva, avançando o status de Pendente para Confirmada.
-        /// </summary>
-        /// <exception cref="InvalidOperationException">
-        /// Lançada quando a reserva não está no estado Pendente.
-        /// </exception>
-        public void Confirmar()
+        /// <summary>Tenta confirmar a reserva. Retorna falha se não estiver no estado Pendente.</summary>
+        public Result Confirmar()
         {
             if (Status != Enums.StatusReserva.Pendente)
-                throw new InvalidOperationException("Reserva não está em estado pendente.");
+                return Result.Fail("Reserva não está em estado pendente.");
             Status = Enums.StatusReserva.Confirmada;
+            return Result.Ok();
         }
 
-        /// <summary>
-        /// Cancela a reserva, alterando o status de Pendente para Cancelada.
-        /// </summary>
-        /// <exception cref="InvalidOperationException">
-        /// Lançada quando a reserva não está no estado Pendente.
-        /// </exception>
-        public void Cancelar()
+        /// <summary>Tenta cancelar a reserva. Retorna falha se não estiver no estado Pendente.</summary>
+        public Result Cancelar()
         {
             if (Status != Enums.StatusReserva.Pendente)
-                throw new InvalidOperationException("Somente reservas pendentes podem ser canceladas.");
+                return Result.Fail("Somente reservas pendentes podem ser canceladas.");
             Status = Enums.StatusReserva.Cancelada;
+            return Result.Ok();
         }
     }
 }

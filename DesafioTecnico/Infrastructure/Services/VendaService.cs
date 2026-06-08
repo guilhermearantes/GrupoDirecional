@@ -1,4 +1,5 @@
 using DesafioTecnico.Domain.Entities;
+using DesafioTecnico.Domain.Results;
 using DesafioTecnico.Infrastructure.Data;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -22,12 +23,13 @@ namespace DesafioTecnico.Infrastructure.Services
         public Task<Venda?> GetByIdAsync(Guid id, CancellationToken ct = default)
             => _uow.Vendas.GetByIdAsync(id, ct);
 
-        public async Task<Venda> CreateAsync(Venda venda, CancellationToken ct = default)
+        public async Task<Result<Venda>> CreateAsync(Venda venda, CancellationToken ct = default)
         {
-            var apt = await _uow.Apartamentos.GetByIdAsync(venda.ApartamentoId, ct)
-                ?? throw new InvalidOperationException("Apartamento não encontrado.");
+            var apt = await _uow.Apartamentos.GetByIdAsync(venda.ApartamentoId, ct);
+            if (apt == null) return Result.Fail<Venda>("Apartamento não encontrado.");
 
-            apt.VenderDiretamente();
+            var vender = apt.VenderDiretamente();
+            if (vender.IsFailure) return Result.Fail<Venda>(vender.Error);
 
             venda.Id = Guid.NewGuid();
             venda.DataVenda = DateTime.UtcNow;
@@ -37,7 +39,7 @@ namespace DesafioTecnico.Infrastructure.Services
             await _uow.CommitAsync(ct);
 
             _logger.LogInformation("Venda {VendaId} criada para apartamento {ApartamentoId}", venda.Id, venda.ApartamentoId);
-            return venda;
+            return Result.Ok(venda);
         }
 
         public async Task UpdateAsync(Venda venda, CancellationToken ct = default)

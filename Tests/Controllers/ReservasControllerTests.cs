@@ -3,6 +3,7 @@ using AutoMapper;
 using DesafioTecnico.Api.Controllers;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
 using DesafioTecnico.Domain.Entities;
+using DesafioTecnico.Domain.Results;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Tests.Controllers
@@ -34,7 +35,7 @@ namespace Tests.Controllers
         public async Task Criar_DeveRetornarCreated_QuandoDadosValidos()
         {
             var reserva = new Reserva { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), DataReserva = DateTime.UtcNow, Status = DesafioTecnico.Domain.Enums.StatusReserva.Pendente };
-            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Reserva>(), It.IsAny<CancellationToken>())).ReturnsAsync(reserva);
+            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Reserva>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Ok(reserva));
 
             var controller = new ReservasController(_serviceMock.Object, _mapper);
             var dto = new DesafioTecnico.Api.DTOs.ReservaCreateDto { ClienteId = reserva.ClienteId, ApartamentoId = reserva.ApartamentoId };
@@ -43,6 +44,20 @@ namespace Tests.Controllers
 
             Assert.NotNull(res);
             Assert.Equal("Get", res.ActionName);
+        }
+
+        [Fact]
+        public async Task Criar_DeveRetornarBadRequest_QuandoServicoRetornaFalha()
+        {
+            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Reserva>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Fail<Reserva>("Apartamento não disponível."));
+
+            var controller = new ReservasController(_serviceMock.Object, _mapper);
+            var dto = new DesafioTecnico.Api.DTOs.ReservaCreateDto { ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid() };
+
+            var res = await controller.Post(dto) as BadRequestObjectResult;
+
+            Assert.NotNull(res);
+            Assert.Contains("Apartamento não disponível.", res.Value!.ToString());
         }
 
         [Fact]
@@ -56,9 +71,9 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Confirmar_DeveRetornarBadRequest_QuandoServicoLancaExcecao()
+        public async Task Confirmar_DeveRetornarBadRequest_QuandoServicoRetornaFalha()
         {
-            _serviceMock.Setup(s => s.ConfirmAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("cannot confirm"));
+            _serviceMock.Setup(s => s.ConfirmAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Fail("cannot confirm"));
             var controller = new ReservasController(_serviceMock.Object, _mapper);
 
             var res = await controller.Confirm(Guid.NewGuid()) as BadRequestObjectResult;
@@ -70,7 +85,7 @@ namespace Tests.Controllers
         [Fact]
         public async Task Confirmar_DeveRetornarNoContent_QuandoBemSucedido()
         {
-            _serviceMock.Setup(s => s.ConfirmAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+            _serviceMock.Setup(s => s.ConfirmAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Ok());
             var controller = new ReservasController(_serviceMock.Object, _mapper);
 
             var res = await controller.Confirm(Guid.NewGuid());
@@ -78,9 +93,9 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Cancelar_DeveRetornarBadRequest_QuandoServicoLancaExcecao()
+        public async Task Cancelar_DeveRetornarBadRequest_QuandoServicoRetornaFalha()
         {
-            _serviceMock.Setup(s => s.CancelAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("cannot cancel"));
+            _serviceMock.Setup(s => s.CancelAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Fail("cannot cancel"));
             var controller = new ReservasController(_serviceMock.Object, _mapper);
 
             var res = await controller.Cancel(Guid.NewGuid()) as BadRequestObjectResult;
@@ -92,7 +107,7 @@ namespace Tests.Controllers
         [Fact]
         public async Task Cancelar_DeveRetornarNoContent_QuandoBemSucedido()
         {
-            _serviceMock.Setup(s => s.CancelAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+            _serviceMock.Setup(s => s.CancelAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Ok());
             var controller = new ReservasController(_serviceMock.Object, _mapper);
 
             var res = await controller.Cancel(Guid.NewGuid());

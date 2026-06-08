@@ -3,6 +3,7 @@ using AutoMapper;
 using DesafioTecnico.Api.Controllers;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
 using DesafioTecnico.Domain.Entities;
+using DesafioTecnico.Domain.Results;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Tests.Controllers
@@ -32,9 +33,9 @@ namespace Tests.Controllers
         }
 
         [Fact]
-        public async Task Criar_DeveRetornarBadRequest_QuandoServicoLancaExcecao()
+        public async Task Criar_DeveRetornarBadRequest_QuandoServicoRetornaFalha()
         {
-            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Venda>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("nope"));
+            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Venda>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Fail<Venda>("nope"));
             var controller = new VendasController(_serviceMock.Object, _mapper);
 
             var dto = new DesafioTecnico.Api.DTOs.VendaCreateDto { ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), ValorPago = 100m };
@@ -48,7 +49,7 @@ namespace Tests.Controllers
         public async Task Criar_DeveRetornarCreated_QuandoDadosValidos()
         {
             var venda = new Venda { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), ValorPago = 100m, DataVenda = DateTime.UtcNow };
-            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Venda>(), It.IsAny<CancellationToken>())).ReturnsAsync(venda);
+            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Venda>(), It.IsAny<CancellationToken>())).ReturnsAsync(Result.Ok(venda));
 
             var controller = new VendasController(_serviceMock.Object, _mapper);
             var dto = new DesafioTecnico.Api.DTOs.VendaCreateDto { ClienteId = venda.ClienteId, ApartamentoId = venda.ApartamentoId, ValorPago = venda.ValorPago };

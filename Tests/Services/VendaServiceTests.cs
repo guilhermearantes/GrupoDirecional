@@ -26,17 +26,18 @@ namespace Tests.Services
             var service = new VendaService(uow, NullLogger<VendaService>.Instance);
 
             var venda = Fixtures.FakeDataBuilder.CreateVenda(cliente.Id, apt.Id);
-            var created = await service.CreateAsync(venda);
+            var result = await service.CreateAsync(venda);
 
+            Assert.True(result.IsSuccess);
             var updatedApt = await uow.Apartamentos.GetByIdAsync(apt.Id);
             Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Vendido, updatedApt!.Status);
-            Assert.Equal(venda.Id, created.Id);
+            Assert.Equal(venda.Id, result.Value.Id);
         }
 
         [Theory]
         [InlineData(DesafioTecnico.Domain.Enums.StatusApartamento.Vendido)]
         [InlineData(DesafioTecnico.Domain.Enums.StatusApartamento.Reservado)]
-        public async Task Criar_DeveLancarExcecao_QuandoApartamentoNaoDisponivel(DesafioTecnico.Domain.Enums.StatusApartamento status)
+        public async Task Criar_DeveRetornarFalha_QuandoApartamentoNaoDisponivel(DesafioTecnico.Domain.Enums.StatusApartamento status)
         {
             var options = new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(databaseName: $"TestDb_CreateVenda_NotAvailable_{status}")
@@ -55,8 +56,10 @@ namespace Tests.Services
             var service = new VendaService(uow, NullLogger<VendaService>.Instance);
 
             var venda = Fixtures.FakeDataBuilder.CreateVenda(cliente.Id, apt.Id);
+            var result = await service.CreateAsync(venda);
 
-            await Assert.ThrowsAsync<InvalidOperationException>(async () => await service.CreateAsync(venda));
+            Assert.True(result.IsFailure);
+            Assert.NotEmpty(result.Error);
         }
     }
 }

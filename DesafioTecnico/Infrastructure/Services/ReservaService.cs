@@ -1,4 +1,5 @@
 using DesafioTecnico.Domain.Entities;
+using DesafioTecnico.Domain.Results;
 using DesafioTecnico.Infrastructure.Data;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -22,31 +23,36 @@ namespace DesafioTecnico.Infrastructure.Services
         public Task<Reserva?> GetByIdAsync(Guid id, CancellationToken ct = default)
             => _uow.Reservas.GetByIdAsync(id, ct);
 
-        public async Task<Reserva> CreateAsync(Reserva reserva, CancellationToken ct = default)
+        public async Task<Result<Reserva>> CreateAsync(Reserva reserva, CancellationToken ct = default)
         {
-            var apt = await _uow.Apartamentos.GetByIdAsync(reserva.ApartamentoId, ct)
-                ?? throw new InvalidOperationException("Apartamento não encontrado.");
+            var apt = await _uow.Apartamentos.GetByIdAsync(reserva.ApartamentoId, ct);
+            if (apt == null) return Result.Fail<Reserva>("Apartamento não encontrado.");
 
-            apt.Reservar();
+            var reservar = apt.Reservar();
+            if (reservar.IsFailure) return Result.Fail<Reserva>(reservar.Error);
+
             reserva.Iniciar();
-
             await _uow.Reservas.AddAsync(reserva, ct);
             await _uow.Apartamentos.UpdateAsync(apt, ct);
             await _uow.CommitAsync(ct);
 
             _logger.LogInformation("Reserva {ReservaId} criada para apartamento {ApartamentoId}", reserva.Id, reserva.ApartamentoId);
-            return reserva;
+            return Result.Ok(reserva);
         }
 
-        public async Task ConfirmAsync(Guid id, CancellationToken ct = default)
+        public async Task<Result> ConfirmAsync(Guid id, CancellationToken ct = default)
         {
-            var reserva = await _uow.Reservas.GetByIdAsync(id, ct)
-                ?? throw new InvalidOperationException("Reserva não encontrada.");
-            var apt = await _uow.Apartamentos.GetByIdAsync(reserva.ApartamentoId, ct)
-                ?? throw new InvalidOperationException("Apartamento da reserva não encontrado.");
+            var reserva = await _uow.Reservas.GetByIdAsync(id, ct);
+            if (reserva == null) return Result.Fail("Reserva não encontrada.");
 
-            reserva.Confirmar();
-            apt.Vender();
+            var apt = await _uow.Apartamentos.GetByIdAsync(reserva.ApartamentoId, ct);
+            if (apt == null) return Result.Fail("Apartamento da reserva não encontrado.");
+
+            var confirmar = reserva.Confirmar();
+            if (confirmar.IsFailure) return confirmar;
+
+            var vender = apt.Vender();
+            if (vender.IsFailure) return vender;
 
             var venda = new Venda
             {
@@ -63,29 +69,41 @@ namespace DesafioTecnico.Infrastructure.Services
             await _uow.CommitAsync(ct);
 
             _logger.LogInformation("Reserva {ReservaId} confirmada — Venda {VendaId} gerada", id, venda.Id);
+            return Result.Ok();
         }
 
-        public async Task CancelAsync(Guid id, CancellationToken ct = default)
+        public async Task<Result> CancelAsync(Guid id, CancellationToken ct = default)
         {
-            var reserva = await _uow.Reservas.GetByIdAsync(id, ct)
-                ?? throw new InvalidOperationException("Reserva não encontrada.");
-            var apt = await _uow.Apartamentos.GetByIdAsync(reserva.ApartamentoId, ct)
-                ?? throw new InvalidOperationException("Apartamento da reserva não encontrado.");
+            var reserva = await _uow.Reservas.GetByIdAsync(id, ct);
+            if (reserva == null) return Result.Fail("Reserva não encontrada.");
 
-            reserva.Cancelar();
-            apt.Liberar();
+            var apt = await _uow.Apartamentos.GetByIdAsync(reserva.ApartamentoId, ct);
+            if (apt == null) return Result.Fail("Apartamento da reserva não encontrado.");
+
+            var cancelar = reserva.Cancelar();
+            if (cancelar.IsFailure) return cancelar;
+
+            var liberar = apt.Liberar();
+            if (liberar.IsFailure) return liberar;
 
             await _uow.Reservas.UpdateAsync(reserva, ct);
             await _uow.Apartamentos.UpdateAsync(apt, ct);
             await _uow.CommitAsync(ct);
 
             _logger.LogInformation("Reserva {ReservaId} cancelada", id);
+            return Result.Ok();
         }
 
-        public Task UpdateAsync(Reserva reserva, CancellationToken ct = default)
-            => _uow.Reservas.UpdateAsync(reserva, ct);
+        public async Task UpdateAsync(Reserva reserva, CancellationToken ct = default)
+        {
+            await _uow.Reservas.UpdateAsync(reserva, ct);
+            await _uow.CommitAsync(ct);
+        }
 
-        public Task DeleteAsync(Guid id, CancellationToken ct = default)
-            => _uow.Reservas.DeleteAsync(id, ct);
+        public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+        {
+            await _uow.Reservas.DeleteAsync(id, ct);
+            await _uow.CommitAsync(ct);
+        }
     }
 }
