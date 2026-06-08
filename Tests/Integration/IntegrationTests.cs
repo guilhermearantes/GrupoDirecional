@@ -76,7 +76,7 @@ namespace Tests.Integration
                 _skipReason = $"Testcontainers failed to start: {ex.Message}. Ensure Docker daemon TCP is available or run docker-compose and execute tests without TESTCONTAINERS.";
             }
 
-            // ~3 min timeout waiting for SQL Server master to accept connections
+            // ~3 min de timeout aguardando o SQL Server master aceitar conexões
                 var masterConn = new SqlConnectionStringBuilder
                 {
                     DataSource = $"127.0.0.1,{HostPort}",
@@ -160,10 +160,10 @@ namespace Tests.Integration
                 builder.UseSetting("environment", "SqlIntegrationTests");
                 builder.ConfigureServices(services =>
                 {
-                    // Program.cs reads the connection string before builder.Build(), so
-                    // ConfigureAppConfiguration cannot override it. Remove the DbContext
-                    // registered with the wrong connection (from appsettings.json) and
-                    // re-register with the correct test connection string.
+                    // Program.cs lê a connection string antes de builder.Build(), então
+                    // ConfigureAppConfiguration não consegue sobrescrevê-la. Remove o DbContext
+                    // registrado com a connection errada (de appsettings.json) e re-registra
+                    // com a connection string correta para os testes.
                     var descriptor = services.SingleOrDefault(d =>
                         d.ServiceType == typeof(Microsoft.EntityFrameworkCore.DbContextOptions<DesafioTecnico.Infrastructure.Data.AppDbContext>));
                     if (descriptor != null) services.Remove(descriptor);
@@ -172,8 +172,8 @@ namespace Tests.Integration
 
                     services.AddSingleton<Microsoft.AspNetCore.Authentication.ISystemClock>(_ => new Tests.Authentication.TimeProviderSystemClock(TimeProvider.System));
                     services.AddAuthentication("Test").AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, Tests.Authentication.TestAuthHandler>("Test", options => { });
-                    // PostConfigure runs after all Configure calls (including Program.cs's JwtBearer default),
-                    // ensuring TestAuthHandler is the active scheme for integration tests.
+                    // PostConfigure executa após todas as chamadas Configure (incluindo o default JwtBearer do Program.cs),
+                    // garantindo que o TestAuthHandler seja o esquema ativo nos testes de integração.
                     services.PostConfigure<Microsoft.AspNetCore.Authentication.AuthenticationOptions>(opts =>
                     {
                         opts.DefaultAuthenticateScheme = "Test";
@@ -187,7 +187,7 @@ namespace Tests.Integration
             using var scope = _configuredFactory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<DesafioTecnico.Infrastructure.Data.AppDbContext>();
 
-            // retry opening connection/migrating for a short while to allow SQL Server to finish initialization
+            // tenta abrir conexão/aplicar migrations por um tempo enquanto o SQL Server termina a inicialização
             var migrated = false;
             var attempts = 0;
             var maxAttempts = 12; // ~60 seconds total
@@ -246,10 +246,7 @@ namespace Tests.Integration
                 }
 #endif
             }
-            catch
-            {
-                // ignore cleanup errors
-            }
+            catch { }
         }
 
         [Fact]
@@ -284,34 +281,28 @@ namespace Tests.Integration
                 return;
             }
 
-            // 1. authenticate using Test auth
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Test", "admin");
 
-            // 2. create client
             var clienteReq = new { Nome = "Cliente IT", Email = "it@exemplo.com", Cpf = "222.222.222-22", DataNascimento = DateTime.UtcNow.AddYears(-30) };
             var clienteResp = await PostJsonAsync("/api/clientes", clienteReq);
             clienteResp.EnsureSuccessStatusCode();
             var createdCliente = JsonDocument.Parse(await clienteResp.Content.ReadAsStringAsync());
             var clienteId = createdCliente.RootElement.GetProperty("id").GetGuid();
 
-            // 3. get apartments and pick first
             var aptsResp = await _client.GetAsync("/api/apartamentos");
             aptsResp.EnsureSuccessStatusCode();
             var aptsJson = JsonDocument.Parse(await aptsResp.Content.ReadAsStringAsync());
             var aptId = aptsJson.RootElement.GetProperty("items")[0].GetProperty("id").GetGuid();
 
-            // 4. create reserva
             var reservaReq = new { ClienteId = clienteId, ApartamentoId = aptId };
             var reservaResp = await PostJsonAsync("/api/reservas", reservaReq);
             reservaResp.EnsureSuccessStatusCode();
             var reservaJson = JsonDocument.Parse(await reservaResp.Content.ReadAsStringAsync());
             var reservaId = reservaJson.RootElement.GetProperty("id").GetGuid();
 
-            // 5. confirm reserva
             var confirmResp = await _client.PostAsync($"/api/reservas/{reservaId}/confirm", null);
             confirmResp.EnsureSuccessStatusCode();
 
-            // verify in db
             using (var scope = _configuredFactory.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<DesafioTecnico.Infrastructure.Data.AppDbContext>();

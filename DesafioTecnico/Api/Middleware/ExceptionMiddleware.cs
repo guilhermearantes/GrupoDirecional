@@ -26,7 +26,7 @@ namespace DesafioTecnico.Api.Middleware
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unhandled exception for {Method} {Path}", context.Request.Method, context.Request.Path);
+                _logger.LogError(ex, "Exceção não tratada para {Method} {Path}", context.Request.Method, context.Request.Path);
                 await WriteErrorResponse(context, ex);
             }
         }
@@ -35,7 +35,7 @@ namespace DesafioTecnico.Api.Middleware
         {
             if (context.Response.HasStarted)
             {
-                _logger.LogError("Response already started — cannot write error for {Method} {Path}", context.Request.Method, context.Request.Path);
+                _logger.LogError("Resposta já iniciada — não é possível escrever erro para {Method} {Path}", context.Request.Method, context.Request.Path);
                 return;
             }
 

@@ -19,7 +19,7 @@ namespace Tests.Authentication
             var header = Request.Headers["Authorization"].ToString();
             if (string.IsNullOrEmpty(header)) return Task.FromResult(AuthenticateResult.Fail("No header"));
 
-            // Header should be 'Test username'
+            // Formato esperado: 'Test <username>'
             var parts = header.Split(' ');
             if (parts.Length != 2) return Task.FromResult(AuthenticateResult.Fail("Invalid header"));
 

@@ -1,5 +1,5 @@
 namespace DesafioTecnico
 {
-    // Expose Program type for WebApplicationFactory in integration tests
+    // Expõe o tipo Program para o WebApplicationFactory nos testes de integração
     public partial class Program { }
 }

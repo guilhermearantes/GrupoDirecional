@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authentication;
 
 namespace Tests.Authentication
 {
-    // ISystemClock is required by the legacy auth stack; bridges it to the modern TimeProvider.
+    // ISystemClock é exigido pelo stack de autenticação legado; faz ponte com o TimeProvider moderno.
     internal sealed class TimeProviderSystemClock : ISystemClock
     {
         private readonly TimeProvider _timeProvider;

@@ -27,7 +27,7 @@ namespace DesafioTecnico.Infrastructure.Security
         {
             var key = !string.IsNullOrEmpty(_settings.Key)
                 ? _settings.Key
-                : throw new InvalidOperationException("Jwt:Key is not configured");
+                : throw new InvalidOperationException("Jwt:Key não está configurado");
             var issuer = _settings.Issuer;
             var audience = _settings.Audience;
             var expiryMinutes = GetExpiryMinutes();
