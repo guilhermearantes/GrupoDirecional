@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using DesafioTecnico.Api.DTOs;
+using DesafioTecnico.Infrastructure.Services.Interfaces;
 
 namespace DesafioTecnico.Api.Controllers
 {
@@ -13,9 +14,9 @@ namespace DesafioTecnico.Api.Controllers
     [AllowAnonymous]
     public class AuthController : ControllerBase
     {
-        private readonly Infrastructure.Services.Interfaces.IAuthService _authService;
+        private readonly IAuthService _authService;
 
-        public AuthController(Infrastructure.Services.Interfaces.IAuthService authService)
+        public AuthController(IAuthService authService)
         {
             _authService = authService;
         }

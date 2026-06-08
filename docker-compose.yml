@@ -26,7 +26,7 @@ services:
         condition: service_completed_successfully
     environment:
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=DesafioTecnicoDb;User Id=sa;Password=${SA_PASSWORD:-Grup0D!reCional2026};TrustServerCertificate=True;"
-      Jwt__Key: "very_secret_key_replace_this_long_enough_to_be_secure_and_at_least_32_chars"
+      Jwt__Key: "${JWT__KEY:-very_secret_key_replace_this_long_enough_to_be_secure_and_at_least_32_chars}"
       Jwt__Issuer: "DesafioTecnicoApi"
       Jwt__Audience: "DesafioTecnicoApiUsers"
     ports:
@@ -45,5 +45,5 @@ services:
     environment:
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=DesafioTecnicoDb;User Id=sa;Password=${SA_PASSWORD:-Grup0D!reCional2026};TrustServerCertificate=True;"
-      Jwt__Key: "very_secret_key_replace_this_long_enough_to_be_secure_and_at_least_32_chars"
+      Jwt__Key: "${JWT__KEY:-very_secret_key_replace_this_long_enough_to_be_secure_and_at_least_32_chars}"
     restart: "no"

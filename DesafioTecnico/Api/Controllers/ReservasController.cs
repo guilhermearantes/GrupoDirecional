@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
 using DesafioTecnico.Infrastructure.Services.Interfaces;
 using DesafioTecnico.Api.DTOs;
+using DesafioTecnico.Domain.Entities;
 
 namespace DesafioTecnico.Api.Controllers
 {
@@ -62,7 +63,7 @@ namespace DesafioTecnico.Api.Controllers
         public async Task<ActionResult> Post([FromBody] ReservaCreateDto dto, CancellationToken ct = default)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            var entity = _mapper.Map<DesafioTecnico.Domain.Entities.Reserva>(dto);
+            var entity = _mapper.Map<Reserva>(dto);
             var result = await _service.CreateAsync(entity, ct);
             if (result.IsFailure) return BadRequest(new { error = result.Error });
             return CreatedAtAction(nameof(Get), new { id = result.Value.Id }, _mapper.Map<ReservaReadDto>(result.Value));
