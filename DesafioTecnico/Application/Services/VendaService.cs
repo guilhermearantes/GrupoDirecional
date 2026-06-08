@@ -2,10 +2,10 @@ using DesafioTecnico.Domain.Entities;
 using DesafioTecnico.Domain.Factories;
 using DesafioTecnico.Domain.Results;
 using DesafioTecnico.Infrastructure.Data;
-using DesafioTecnico.Infrastructure.Services.Interfaces;
+using DesafioTecnico.Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 
-namespace DesafioTecnico.Infrastructure.Services
+namespace DesafioTecnico.Application.Services
 {
     public class VendaService : IVendaService
     {

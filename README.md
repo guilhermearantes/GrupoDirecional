@@ -473,12 +473,13 @@ Se nenhuma variável de ambiente estiver configurada e o Testcontainers não est
 ```
 DesafioTecnico/
 ├── Api/            Controllers, DTOs, AutoMapper profile, Middleware
+├── Application/
+│   └── Services/   Lógica de orquestração (casos de uso) + Interfaces
 ├── Domain/         Entidades (com comportamento) e Enums — sem dependências externas
 └── Infrastructure/
     ├── Data/       AppDbContext, EF Configurations, SeedData, Migrations
     ├── Repositories/ Padrão Repository + Interfaces
-    ├── Security/   JwtTokenGenerator
-    └── Services/   Lógica de orquestração + Interfaces
+    └── Security/   JwtTokenGenerator
 ```
 
 ### Decisões técnicas
@@ -539,7 +540,7 @@ O `UnitOfWork` expõe todos os repositórios como propriedades e oferece um úni
 
 ### Service Layer
 
-**Onde:** `Infrastructure/Services/`
+**Onde:** `Application/Services/`
 
 **Por que foi escolhido:** Controllers devem apenas traduzir HTTP → objeto → resposta HTTP. A orquestração — buscar entidades, aplicar regras de domínio, persistir via Unit of Work — fica exclusivamente nos serviços, evitando *fat controllers*.
 
@@ -551,7 +552,7 @@ O `UnitOfWork` expõe todos os repositórios como propriedades e oferece um úni
 
 ### Result Pattern
 
-**Onde:** `Domain/Results/Result.cs` → consumido em `Domain/Entities/`, `Infrastructure/Services/` e `Api/Controllers/`
+**Onde:** `Domain/Results/Result.cs` → consumido em `Domain/Entities/`, `Application/Services/` e `Api/Controllers/`
 
 **Por que foi escolhido:** As entidades de domínio modelam máquinas de estado (apartamento Disponível → Reservado → Vendido). Quando uma transição é inválida — por exemplo, tentar reservar um apartamento já vendido — o código original lançava `InvalidOperationException`. Exceções como fluxo de controle são custosas, obscurecem o fluxo normal e forçam os controllers a usar `try/catch` para tratar situações *esperadas*.
 

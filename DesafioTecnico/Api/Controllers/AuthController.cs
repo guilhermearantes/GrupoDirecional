@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using DesafioTecnico.Api.DTOs;
-using DesafioTecnico.Infrastructure.Services.Interfaces;
+using DesafioTecnico.Application.Services.Interfaces;
 
 namespace DesafioTecnico.Api.Controllers
 {

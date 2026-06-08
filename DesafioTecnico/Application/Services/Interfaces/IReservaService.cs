@@ -1,7 +1,7 @@
 using DesafioTecnico.Domain.Entities;
 using DesafioTecnico.Domain.Results;
 
-namespace DesafioTecnico.Infrastructure.Services.Interfaces
+namespace DesafioTecnico.Application.Services.Interfaces
 {
     /// <summary>
     /// Define operações relacionadas ao ciclo de vida de reservas de apartamentos.

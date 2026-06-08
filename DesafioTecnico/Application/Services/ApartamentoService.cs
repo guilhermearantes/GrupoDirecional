@@ -1,9 +1,9 @@
 using DesafioTecnico.Domain.Entities;
 using DesafioTecnico.Domain.Enums;
 using DesafioTecnico.Infrastructure.Data;
-using DesafioTecnico.Infrastructure.Services.Interfaces;
+using DesafioTecnico.Application.Services.Interfaces;
 
-namespace DesafioTecnico.Infrastructure.Services
+namespace DesafioTecnico.Application.Services
 {
     public class ApartamentoService : IApartamentoService
     {
@@ -28,7 +28,7 @@ namespace DesafioTecnico.Infrastructure.Services
         public async Task<Apartamento> CreateAsync(Apartamento apt, CancellationToken ct = default)
         {
             apt.Id = Guid.NewGuid();
-            apt.Status = Domain.Enums.StatusApartamento.Disponivel;
+            apt.Status = StatusApartamento.Disponivel;
             await _uow.Apartamentos.AddAsync(apt, ct);
             await _uow.CommitAsync(ct);
             return apt;

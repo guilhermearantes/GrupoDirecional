@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using DesafioTecnico.Infrastructure.Data;
-using DesafioTecnico.Infrastructure.Services;
+using DesafioTecnico.Application.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Tests.Services

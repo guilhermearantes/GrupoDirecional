@@ -1,7 +1,7 @@
 using Moq;
 using AutoMapper;
 using DesafioTecnico.Api.Controllers;
-using DesafioTecnico.Infrastructure.Services.Interfaces;
+using DesafioTecnico.Application.Services.Interfaces;
 using DesafioTecnico.Domain.Entities;
 using DesafioTecnico.Domain.Results;
 using Microsoft.AspNetCore.Mvc;

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging.Abstractions;
 using DesafioTecnico.Infrastructure.Data;
 using DesafioTecnico.Infrastructure.Security;
-using DesafioTecnico.Infrastructure.Services;
+using DesafioTecnico.Application.Services;
 
 namespace Tests.Services
 {

@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
 using DesafioTecnico.Infrastructure.Data;
 using DesafioTecnico.Infrastructure.Security;
-using DesafioTecnico.Infrastructure.Services.Interfaces;
+using DesafioTecnico.Application.Services.Interfaces;
 
-namespace DesafioTecnico.Infrastructure.Services
+namespace DesafioTecnico.Application.Services
 {
     public class AuthService : IAuthService
     {

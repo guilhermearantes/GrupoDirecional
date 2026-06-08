@@ -1,7 +1,7 @@
 using Moq;
 using Microsoft.AspNetCore.Mvc;
 using DesafioTecnico.Api.Controllers;
-using DesafioTecnico.Infrastructure.Services.Interfaces;
+using DesafioTecnico.Application.Services.Interfaces;
 using DesafioTecnico.Api.DTOs;
 
 namespace Tests.Controllers

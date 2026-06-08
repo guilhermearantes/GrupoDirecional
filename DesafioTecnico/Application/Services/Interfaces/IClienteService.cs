@@ -1,6 +1,6 @@
 using DesafioTecnico.Domain.Entities;
 
-namespace DesafioTecnico.Infrastructure.Services.Interfaces
+namespace DesafioTecnico.Application.Services.Interfaces
 {
     /// <summary>
     /// Define operações de gerenciamento de clientes.

@@ -1,7 +1,7 @@
 using DesafioTecnico.Domain.Entities;
 using DesafioTecnico.Domain.Enums;
 
-namespace DesafioTecnico.Infrastructure.Services.Interfaces
+namespace DesafioTecnico.Application.Services.Interfaces
 {
     /// <summary>
     /// Define operações de gerenciamento de apartamentos.

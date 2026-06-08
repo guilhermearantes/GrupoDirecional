@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
-using DesafioTecnico.Infrastructure.Services.Interfaces;
+using DesafioTecnico.Application.Services.Interfaces;
 using DesafioTecnico.Api.DTOs;
 using DesafioTecnico.Domain.Entities;
 using DesafioTecnico.Domain.Enums;

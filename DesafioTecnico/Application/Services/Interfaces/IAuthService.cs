@@ -1,4 +1,4 @@
-namespace DesafioTecnico.Infrastructure.Services.Interfaces
+namespace DesafioTecnico.Application.Services.Interfaces
 {
     /// <summary>
     /// Define operações de autenticação de usuários.
