@@ -66,7 +66,7 @@ builder.Services.AddOpenApi(options =>
 });
 
 var connection = builder.Configuration.GetConnectionString("DefaultConnection");
-// SQLite for local dev and integration tests; SQL Server for staging/prod (docker).
+// SQLite for local dev; SQL Server for staging/prod (docker) and SQL integration tests.
 if (builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("IntegrationTests"))
 {
     // Usa caminho absoluto em Development para evitar ambiguidade de working directory
@@ -132,7 +132,8 @@ if (app.Environment.IsDevelopment())
 
 // Seed initial data (admin user + demo apartment) so the system is usable right after migrations.
 // Guards inside EnsureSeedData prevent duplicate inserts on subsequent startups.
-if (!app.Environment.IsEnvironment("IntegrationTests"))
+// SqlIntegrationTests skips seed: the test applies migrations and seeds its own data.
+if (!app.Environment.IsEnvironment("IntegrationTests") && !app.Environment.IsEnvironment("SqlIntegrationTests"))
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();

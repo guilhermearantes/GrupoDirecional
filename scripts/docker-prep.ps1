@@ -1,10 +1,14 @@
 param(
 	[string]$Image = 'mcr.microsoft.com/mssql/server:2019-latest',
 	[string]$ContainerName = 'desafio-test-sql',
-	[string]$SaPassword = $env:SA_PASSWORD ?? 'Your_password123',
+	[string]$SaPassword = '',
 	[int]$HostPort = 14333,
 	[int]$TimeoutSeconds = 180
 )
+
+if (-not $SaPassword) {
+	$SaPassword = if ($env:SA_PASSWORD) { $env:SA_PASSWORD } else { 'Your_password123' }
+}
 
 Write-Host "Pulling image $Image..."
 docker pull $Image | Out-Null

@@ -9,6 +9,7 @@ using DotNet.Testcontainers.Containers;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Tests.Integration
@@ -156,17 +157,28 @@ namespace Tests.Integration
 
             _configuredFactory = _factory.WithWebHostBuilder(builder =>
             {
-                // Development so SQLite branch doesn't activate; we replace the DbContext below anyway.
-                builder.UseSetting("environment", "Development");
+                builder.UseSetting("environment", "SqlIntegrationTests");
                 builder.ConfigureServices(services =>
                 {
-                    var descriptors = services.Where(d => d.ServiceType == typeof(DbContextOptions<DesafioTecnico.Infrastructure.Data.AppDbContext>) || d.ServiceType == typeof(DesafioTecnico.Infrastructure.Data.AppDbContext)).ToList();
-                    foreach (var d in descriptors) services.Remove(d);
-
-                    services.AddDbContext<DesafioTecnico.Infrastructure.Data.AppDbContext>(options => options.UseSqlServer(conn));
+                    // Program.cs reads the connection string before builder.Build(), so
+                    // ConfigureAppConfiguration cannot override it. Remove the DbContext
+                    // registered with the wrong connection (from appsettings.json) and
+                    // re-register with the correct test connection string.
+                    var descriptor = services.SingleOrDefault(d =>
+                        d.ServiceType == typeof(Microsoft.EntityFrameworkCore.DbContextOptions<DesafioTecnico.Infrastructure.Data.AppDbContext>));
+                    if (descriptor != null) services.Remove(descriptor);
+                    services.AddDbContext<DesafioTecnico.Infrastructure.Data.AppDbContext>(opts =>
+                        opts.UseSqlServer(conn));
 
                     services.AddSingleton<Microsoft.AspNetCore.Authentication.ISystemClock>(_ => new Tests.Authentication.TimeProviderSystemClock(TimeProvider.System));
                     services.AddAuthentication("Test").AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, Tests.Authentication.TestAuthHandler>("Test", options => { });
+                    // PostConfigure runs after all Configure calls (including Program.cs's JwtBearer default),
+                    // ensuring TestAuthHandler is the active scheme for integration tests.
+                    services.PostConfigure<Microsoft.AspNetCore.Authentication.AuthenticationOptions>(opts =>
+                    {
+                        opts.DefaultAuthenticateScheme = "Test";
+                        opts.DefaultChallengeScheme = "Test";
+                    });
                 });
             });
 
@@ -351,15 +363,15 @@ namespace Tests.Integration
             // Factory sem TestAuthHandler — JWT nativo da aplicação é usado
             using var jwtFactory = _factory.WithWebHostBuilder(builder =>
             {
-                builder.UseSetting("environment", "Development");
+                builder.UseSetting("environment", "SqlIntegrationTests");
                 builder.ConfigureServices(services =>
                 {
-                    var toRemove = services.Where(d =>
-                        d.ServiceType == typeof(DbContextOptions<DesafioTecnico.Infrastructure.Data.AppDbContext>) ||
-                        d.ServiceType == typeof(DesafioTecnico.Infrastructure.Data.AppDbContext)).ToList();
-                    foreach (var d in toRemove) services.Remove(d);
-                    services.AddDbContext<DesafioTecnico.Infrastructure.Data.AppDbContext>(
-                        options => options.UseSqlServer(_connectionString));
+                    var descriptor = services.SingleOrDefault(d =>
+                        d.ServiceType == typeof(Microsoft.EntityFrameworkCore.DbContextOptions<DesafioTecnico.Infrastructure.Data.AppDbContext>));
+                    if (descriptor != null) services.Remove(descriptor);
+                    services.AddDbContext<DesafioTecnico.Infrastructure.Data.AppDbContext>(opts =>
+                        opts.UseSqlServer(_connectionString));
+
                     services.AddSingleton<Microsoft.AspNetCore.Authentication.ISystemClock>(
                         _ => new Tests.Authentication.TimeProviderSystemClock(TimeProvider.System));
                 });
@@ -377,8 +389,8 @@ namespace Tests.Integration
 
             // 2. Criar cliente
             var uid = Guid.NewGuid();
-            var digits = uid.ToString("N")[..9];
-            var cpf = $"{digits[..3]}.{digits[3..6]}.{digits[6..9]}-{digits[..2]}";
+            var rng = new Random();
+            var cpf = $"{rng.Next(100, 999)}.{rng.Next(100, 999)}.{rng.Next(100, 999)}-{rng.Next(10, 99)}";
             var clienteResp = await PostJsonAsync(jwtClient, "/api/clientes", new
             {
                 Nome = "Cliente Cancelamento",
