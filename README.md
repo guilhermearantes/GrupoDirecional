@@ -502,7 +502,7 @@ DesafioTecnico/
 - **Exclusão de vendas**: o endpoint `DELETE /api/vendas/{id}` foi incluído por requisito do desafio. Em produção, vendas são registros contábeis — a prática correta é marcar como estornadas (soft delete ou campo de status), nunca remover o registro do banco.
 - **Concorrência em reservas (não implementado no desafio)**: o fluxo de reserva lê o status do apartamento e, em seguida, atualiza — sem locking. Em produção, duas requisições simultâneas poderiam reservar o mesmo apartamento. A solução correta é concorrência otimista via `RowVersion`/`ETag` no `Apartamento`, rejeitando a segunda operação com 409 Conflict.
 - **Preço da venda congelado na reserva (não implementado no desafio)**: ao confirmar uma reserva, o `ValorPago` da venda é calculado com o preço atual do apartamento. Se o valor mudar entre a criação da reserva e sua confirmação, o cliente é cobrado um valor diferente do acordado. O correto seria registrar o valor na `Reserva` e transferi-lo para a `Venda` na confirmação.
-- **Exclusão de clientes com histórico (não implementado no desafio)**: atualmente é possível excluir um cliente que possui vendas ou reservas. Em produção, essa operação deveria ser bloqueada com 409 Conflict enquanto existirem registros vinculados.
+- **Exclusão de clientes com histórico**: a exclusão é bloqueada com 409 Conflict quando o cliente possui reservas ou vendas associadas. O banco de dados rejeita a operação por integridade referencial (FK), e o controller intercepta a `DbUpdateException` retornando a mensagem descritiva ao cliente da API.
 - **Validação do CPF**: o sistema valida o formato `NNN.NNN.NNN-NN`, mas não os dígitos verificadores do algoritmo da Receita Federal. Em produção, utilizaria uma biblioteca de validação de CPF.
 - **Migrations via job separado no Compose**: o serviço `migrations` aplica o `database update` antes da API subir, seguindo a prática de não aplicar migrations em runtime de produção.
 - **Seed automático no startup**: usuário `admin` e dados de demonstração são inseridos na primeira inicialização, com guards idempotentes (`if (!context.X.Any())`).
@@ -578,7 +578,8 @@ catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Messag
 
 // Depois
 var result = await _service.ConfirmAsync(id, ct);
-return result.IsSuccess ? NoContent() : BadRequest(new { error = result.Error });
+if (result.IsNotFound) return NotFound(new ErrorResponse(result.Error));
+return result.IsSuccess ? NoContent() : BadRequest(new ErrorResponse(result.Error));
 ```
 
 **O que se ganha:**
