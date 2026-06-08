@@ -21,15 +21,9 @@ namespace DesafioTecnico.Infrastructure.Services
         public async Task<(string Token, int ExpiresInSeconds)?> AuthenticateAsync(string username, string password, CancellationToken ct = default)
         {
             var user = await _context.Usuarios.FirstOrDefaultAsync(u => u.Username == username, ct);
-            if (user == null)
+            if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             {
-                _logger.LogWarning("Login falhou: usuário '{Username}' não encontrado", username);
-                return null;
-            }
-
-            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-            {
-                _logger.LogWarning("Login falhou: senha incorreta para '{Username}'", username);
+                _logger.LogWarning("Login falhou para '{Username}'", username);
                 return null;
             }
 

@@ -21,7 +21,8 @@ namespace DesafioTecnico.Api.Mapping
             CreateMap<VendaCreateDto, Venda>();
             CreateMap<VendaUpdateDto, Venda>();
 
-            CreateMap<Reserva, ReservaReadDto>();
+            CreateMap<Reserva, ReservaReadDto>()
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
             CreateMap<ReservaCreateDto, Reserva>();
         }
     }

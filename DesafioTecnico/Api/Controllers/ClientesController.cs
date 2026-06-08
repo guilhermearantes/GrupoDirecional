@@ -90,7 +90,6 @@ namespace DesafioTecnico.Api.Controllers
             var existing = await _service.GetByIdAsync(id, ct);
             if (existing == null) return NotFound();
             var toUpdate = _mapper.Map(dto, existing);
-            toUpdate.Id = id;
             try
             {
                 await _service.UpdateAsync(toUpdate, ct);

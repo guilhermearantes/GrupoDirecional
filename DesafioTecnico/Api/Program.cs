@@ -1,7 +1,16 @@
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.RateLimiting;
+using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using DesafioTecnico.Infrastructure.Data;
+using DesafioTecnico.Infrastructure.Security;
+using DesafioTecnico.Infrastructure.Services;
+using DesafioTecnico.Infrastructure.Services.Interfaces;
+using DesafioTecnico.Api.Filters;
+using DesafioTecnico.Api.Mapping;
+using DesafioTecnico.Api.Middleware;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,17 +24,17 @@ builder.Configuration
 
 builder.Services.AddControllers(options =>
 {
-    options.Filters.Add<DesafioTecnico.Api.Filters.ValidateRouteGuidsFilter>();
+    options.Filters.Add<ValidateRouteGuidsFilter>();
 });
-builder.Services.AddAutoMapper(cfg => cfg.AddProfile<DesafioTecnico.Api.Mapping.AutoMapperProfile>());
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<AutoMapperProfile>());
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
         document.Components ??= new();
-        document.Components.SecuritySchemes["Bearer"] = new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+        document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
         {
-            Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+            Type = SecuritySchemeType.Http,
             Scheme = "bearer",
             BearerFormat = "JWT",
             Description = "Token JWT obtido em POST /api/auth/login. Cole apenas o valor do token, sem o prefixo 'Bearer'."
@@ -40,13 +49,13 @@ builder.Services.AddOpenApi(options =>
             .Any(m => m is Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute);
         if (hasAuthorize && !isAnonymous)
         {
-            operation.Security = [new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+            operation.Security = [new OpenApiSecurityRequirement
             {
-                [new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                [new OpenApiSecurityScheme
                 {
-                    Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                    Reference = new OpenApiReference
                     {
-                        Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                        Type = ReferenceType.SecurityScheme,
                         Id = "Bearer"
                     }
                 }] = []
@@ -71,13 +80,14 @@ else
 {
     builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connection));
 }
-builder.Services.AddScoped<DesafioTecnico.Infrastructure.Data.IUnitOfWork, DesafioTecnico.Infrastructure.Data.UnitOfWork>();
-builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IClienteService, DesafioTecnico.Infrastructure.Services.ClienteService>();
-builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IReservaService, DesafioTecnico.Infrastructure.Services.ReservaService>();
-builder.Services.AddScoped<DesafioTecnico.Infrastructure.Security.JwtTokenGenerator>();
-builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IAuthService, DesafioTecnico.Infrastructure.Services.AuthService>();
-builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IVendaService, DesafioTecnico.Infrastructure.Services.VendaService>();
-builder.Services.AddScoped<DesafioTecnico.Infrastructure.Services.Interfaces.IApartamentoService, DesafioTecnico.Infrastructure.Services.ApartamentoService>();
+
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IClienteService, ClienteService>();
+builder.Services.AddScoped<IReservaService, ReservaService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IVendaService, VendaService>();
+builder.Services.AddScoped<IApartamentoService, ApartamentoService>();
+builder.Services.AddScoped<JwtTokenGenerator>();
 
 // Rate limiting — máx 5 tentativas de login por minuto por IP
 builder.Services.AddRateLimiter(options =>
@@ -95,11 +105,11 @@ builder.Services.AddRateLimiter(options =>
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "Dev_FallbackKey_NotForProduction_MinLength32chars!";
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
-    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+    options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
@@ -107,7 +117,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "DesafioTecnicoApi",
         ValidAudience = builder.Configuration["Jwt:Audience"] ?? "DesafioTecnicoApiUsers",
-        IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtKey))
+        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtKey))
     };
 });
 
@@ -142,7 +152,7 @@ if (!app.Environment.IsEnvironment("IntegrationTests"))
     SeedData.EnsureSeedData(db);
 }
 
-app.UseMiddleware<DesafioTecnico.Api.Middleware.ExceptionMiddleware>();
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseHttpsRedirection();
 

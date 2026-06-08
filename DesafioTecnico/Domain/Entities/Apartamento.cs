@@ -15,7 +15,6 @@ namespace DesafioTecnico.Domain.Entities
         public ICollection<Reserva> Reservas { get; set; } = new List<Reserva>();
         public ICollection<Venda> Vendas { get; set; } = new List<Venda>();
 
-        /// <summary>Tenta alterar o status para Reservado. Retorna falha se o apartamento não estiver Disponível.</summary>
         public Result Reservar()
         {
             if (Status != Enums.StatusApartamento.Disponivel)
@@ -24,7 +23,6 @@ namespace DesafioTecnico.Domain.Entities
             return Result.Ok();
         }
 
-        /// <summary>Tenta alterar o status para Vendido a partir de uma reserva confirmada. Retorna falha se não estiver Reservado.</summary>
         public Result Vender()
         {
             if (Status != Enums.StatusApartamento.Reservado)
@@ -33,7 +31,6 @@ namespace DesafioTecnico.Domain.Entities
             return Result.Ok();
         }
 
-        /// <summary>Tenta alterar o status para Vendido sem reserva prévia. Retorna falha se não estiver Disponível.</summary>
         public Result VenderDiretamente()
         {
             if (Status != Enums.StatusApartamento.Disponivel)
@@ -42,7 +39,6 @@ namespace DesafioTecnico.Domain.Entities
             return Result.Ok();
         }
 
-        /// <summary>Tenta devolver o apartamento ao status Disponível. Retorna falha se não estiver Reservado.</summary>
         public Result Liberar()
         {
             if (Status != Enums.StatusApartamento.Reservado)

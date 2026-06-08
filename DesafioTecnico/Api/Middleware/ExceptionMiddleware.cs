@@ -5,7 +5,7 @@ namespace DesafioTecnico.Api.Middleware
 {
     /// <summary>
     /// Captura exceções não tratadas e retorna respostas JSON padronizadas:
-    /// <c>InvalidOperationException</c> → 400, <c>UnauthorizedAccessException</c> → 403, demais → 500.
+    /// <c>UnauthorizedAccessException</c> → 403, demais → 500.
     /// </summary>
     public class ExceptionMiddleware
     {
@@ -36,7 +36,6 @@ namespace DesafioTecnico.Api.Middleware
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = ex switch
             {
-                InvalidOperationException => (int)HttpStatusCode.BadRequest,
                 UnauthorizedAccessException => (int)HttpStatusCode.Forbidden,
                 _ => (int)HttpStatusCode.InternalServerError
             };
