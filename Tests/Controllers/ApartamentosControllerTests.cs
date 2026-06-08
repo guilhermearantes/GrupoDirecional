@@ -15,7 +15,7 @@ namespace Tests.Controllers
         public ApartamentosControllerTests()
         {
             _serviceMock = new Mock<IApartamentoService>();
-            var config = new MapperConfiguration(cfg => cfg.AddProfile<DesafioTecnico.Api.Mapping.AutoMapperProfile>());
+            var config = new MapperConfiguration(cfg => cfg.AddProfile<DesafioTecnico.Api.Mapping.AutoMapperProfile>(), Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance);
             _mapper = config.CreateMapper();
         }
 

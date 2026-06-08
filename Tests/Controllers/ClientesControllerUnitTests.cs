@@ -16,7 +16,7 @@ namespace Tests.Controllers
         public ClientesControllerTests()
         {
             _serviceMock = new Mock<IClienteService>();
-            var cfg = new MapperConfiguration(c => c.AddProfile<DesafioTecnico.Api.Mapping.AutoMapperProfile>());
+            var cfg = new MapperConfiguration(c => c.AddProfile<DesafioTecnico.Api.Mapping.AutoMapperProfile>(), Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance);
             _mapper = cfg.CreateMapper();
         }
 

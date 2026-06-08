@@ -17,7 +17,7 @@ builder.Services.AddControllers(options =>
 {
     options.Filters.Add<DesafioTecnico.Api.Filters.ValidateRouteGuidsFilter>();
 });
-builder.Services.AddAutoMapper(typeof(DesafioTecnico.Api.Mapping.AutoMapperProfile));
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<DesafioTecnico.Api.Mapping.AutoMapperProfile>());
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
