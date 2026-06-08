@@ -173,5 +173,39 @@ namespace Tests.Controllers
             Assert.IsType<NoContentResult>(res);
             _serviceMock.Verify(s => s.DeleteAsync(apt.Id, It.IsAny<CancellationToken>()), Times.Once);
         }
+
+        [Fact]
+        public async Task ObterPorId_DeveRetornarOk_QuandoEncontrado()
+        {
+            var apt = Fixtures.FakeDataBuilder.CreateApartamento();
+            _serviceMock.Setup(s => s.GetByIdAsync(apt.Id, It.IsAny<CancellationToken>())).ReturnsAsync(apt);
+            var controller = new ApartamentosController(_serviceMock.Object, _mapper);
+
+            var result = await controller.Get(apt.Id);
+
+            var ok = result.Result as OkObjectResult;
+            Assert.NotNull(ok);
+            var dto = ok.Value as ApartamentoReadDto;
+            Assert.NotNull(dto);
+            Assert.Equal(apt.Codigo, dto.Codigo);
+        }
+
+        [Fact]
+        public async Task Atualizar_DeveRetornarConflict_QuandoCodigoDuplicado()
+        {
+            var apt = Fixtures.FakeDataBuilder.CreateApartamento();
+            _serviceMock.Setup(s => s.GetByIdAsync(apt.Id, It.IsAny<CancellationToken>())).ReturnsAsync(apt);
+            _serviceMock.Setup(s => s.UpdateAsync(It.IsAny<Apartamento>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new DbUpdateException("unique constraint", new Exception()));
+            var controller = new ApartamentosController(_serviceMock.Object, _mapper);
+            var dto = new DesafioTecnico.Api.DTOs.ApartamentoUpdateDto
+            {
+                Codigo = "AP-DUP", Bloco = apt.Bloco, Andar = apt.Andar, Area = apt.Area, Valor = apt.Valor
+            };
+
+            var res = await controller.Put(apt.Id, dto);
+
+            Assert.IsType<ConflictObjectResult>(res);
+        }
     }
 }

@@ -1,5 +1,6 @@
 using Moq;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using DesafioTecnico.Api.Controllers;
 using DesafioTecnico.Application.Services.Interfaces;
 using DesafioTecnico.Domain.Entities;
@@ -117,6 +118,69 @@ namespace Tests.Controllers
 
             Assert.IsType<NoContentResult>(res);
             _serviceMock.Verify(s => s.DeleteAsync(cliente.Id, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task ObterPorId_DeveRetornarOk_QuandoEncontrado()
+        {
+            var cliente = Fixtures.FakeDataBuilder.CreateCliente();
+            _serviceMock.Setup(s => s.GetByIdAsync(cliente.Id, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+            var controller = new ClientesController(_serviceMock.Object, _mapper);
+
+            var res = await controller.Get(cliente.Id);
+
+            var ok = res.Result as OkObjectResult;
+            Assert.NotNull(ok);
+            Assert.NotNull(ok.Value);
+        }
+
+        [Fact]
+        public async Task Criar_DeveRetornarConflict_QuandoCpfOuEmailDuplicado()
+        {
+            _serviceMock.Setup(s => s.CreateAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new DbUpdateException("unique constraint", new Exception()));
+            var controller = new ClientesController(_serviceMock.Object, _mapper);
+
+            var res = await controller.Post(new DesafioTecnico.Api.DTOs.ClienteCreateDto
+            {
+                Nome = "Test", Email = "dup@email.com", Cpf = "123.456.789-00",
+                DataNascimento = DateTime.UtcNow.AddYears(-30)
+            });
+
+            Assert.IsType<ConflictObjectResult>(res);
+        }
+
+        [Fact]
+        public async Task Atualizar_DeveRetornarConflict_QuandoCpfOuEmailDuplicado()
+        {
+            var cliente = Fixtures.FakeDataBuilder.CreateCliente();
+            _serviceMock.Setup(s => s.GetByIdAsync(cliente.Id, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+            _serviceMock.Setup(s => s.UpdateAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new DbUpdateException("unique constraint", new Exception()));
+            var controller = new ClientesController(_serviceMock.Object, _mapper);
+            var dto = new DesafioTecnico.Api.DTOs.ClienteUpdateDto
+            {
+                Nome = cliente.Nome, Email = "outro@email.com", Cpf = cliente.Cpf,
+                DataNascimento = cliente.DataNascimento
+            };
+
+            var res = await controller.Put(cliente.Id, dto);
+
+            Assert.IsType<ConflictObjectResult>(res);
+        }
+
+        [Fact]
+        public async Task Excluir_DeveRetornarConflict_QuandoClienteTemHistorico()
+        {
+            var cliente = Fixtures.FakeDataBuilder.CreateCliente();
+            _serviceMock.Setup(s => s.GetByIdAsync(cliente.Id, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+            _serviceMock.Setup(s => s.DeleteAsync(cliente.Id, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new DbUpdateException("foreign key constraint", new Exception()));
+            var controller = new ClientesController(_serviceMock.Object, _mapper);
+
+            var res = await controller.Delete(cliente.Id);
+
+            Assert.IsType<ConflictObjectResult>(res);
         }
     }
 }

@@ -312,5 +312,29 @@ namespace Tests.Services
 
             context.Dispose();
         }
+
+        [Fact]
+        public async Task Cancelar_DeveRetornarNotFound_QuandoReservaNaoEncontrada()
+        {
+            var (context, _, service) = BuildSut("TestDb_CancelReserva_NotFound");
+
+            var result = await service.CancelAsync(Guid.NewGuid());
+
+            Assert.True(result.IsNotFound);
+            Assert.NotEmpty(result.Error);
+            context.Dispose();
+        }
+
+        [Fact]
+        public async Task Deletar_DeveRetornarNotFound_QuandoReservaNaoEncontrada()
+        {
+            var (context, _, service) = BuildSut("TestDb_DeleteReserva_NotFound");
+
+            var result = await service.DeleteAsync(Guid.NewGuid());
+
+            Assert.True(result.IsNotFound);
+            Assert.NotEmpty(result.Error);
+            context.Dispose();
+        }
     }
 }

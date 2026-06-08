@@ -113,10 +113,46 @@ namespace Tests.Services
             context.Vendas.Add(venda);
             context.SaveChanges();
 
-            await service.DeleteAsync(venda.Id);
+            var result = await service.DeleteAsync(venda.Id);
 
+            Assert.True(result.IsSuccess);
             var fetched = await uow.Vendas.GetByIdAsync(venda.Id);
             Assert.Null(fetched);
+        }
+
+        [Fact]
+        public async Task Excluir_DeveRetornarNotFound_QuandoVendaNaoEncontrada()
+        {
+            var (_, _, service) = BuildSut("TestDb_DeleteVenda_NotFound");
+
+            var result = await service.DeleteAsync(Guid.NewGuid());
+
+            Assert.True(result.IsNotFound);
+            Assert.NotEmpty(result.Error);
+        }
+
+        [Fact]
+        public async Task Excluir_DeveRestaurarStatusApartamento_QuandoBemSucedido()
+        {
+            var (context, uow, service) = BuildSut("TestDb_DeleteVenda_RestoreApt");
+
+            var cliente = Fixtures.FakeDataBuilder.CreateCliente();
+            var apt = Fixtures.FakeDataBuilder.CreateApartamento();
+            context.Clientes.Add(cliente);
+            context.Apartamentos.Add(apt);
+            context.SaveChanges();
+
+            var created = await service.CreateAsync(Fixtures.FakeDataBuilder.CreateVenda(cliente.Id, apt.Id));
+            Assert.True(created.IsSuccess);
+            Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Vendido,
+                (await uow.Apartamentos.GetByIdAsync(apt.Id))!.Status);
+
+            var result = await service.DeleteAsync(created.Value.Id);
+
+            Assert.True(result.IsSuccess);
+            Assert.Null(await uow.Vendas.GetByIdAsync(created.Value.Id));
+            var restoredApt = await uow.Apartamentos.GetByIdAsync(apt.Id);
+            Assert.Equal(DesafioTecnico.Domain.Enums.StatusApartamento.Disponivel, restoredApt!.Status);
         }
     }
 }

@@ -150,14 +150,44 @@ namespace Tests.Controllers
         public async Task Excluir_DeveRetornarNoContent_QuandoExiste()
         {
             var reserva = new Reserva { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid() };
-            _serviceMock.Setup(s => s.GetByIdAsync(reserva.Id, It.IsAny<CancellationToken>())).ReturnsAsync(reserva);
             _serviceMock.Setup(s => s.DeleteAsync(reserva.Id, It.IsAny<CancellationToken>())).ReturnsAsync(Result.Ok()).Verifiable();
 
             var controller = new ReservasController(_serviceMock.Object, _mapper);
             var res = await controller.Delete(reserva.Id);
 
             Assert.IsType<NoContentResult>(res);
-            _serviceMock.Verify();
+            _serviceMock.Verify(s => s.DeleteAsync(reserva.Id, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task ObterPorId_DeveRetornarOk_QuandoEncontrado()
+        {
+            var reserva = new Reserva
+            {
+                Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(),
+                DataReserva = DateTime.UtcNow, Status = DesafioTecnico.Domain.Enums.StatusReserva.Pendente
+            };
+            _serviceMock.Setup(s => s.GetByIdAsync(reserva.Id, It.IsAny<CancellationToken>())).ReturnsAsync(reserva);
+            var controller = new ReservasController(_serviceMock.Object, _mapper);
+
+            var res = await controller.Get(reserva.Id);
+
+            var ok = res.Result as OkObjectResult;
+            Assert.NotNull(ok);
+            Assert.NotNull(ok.Value);
+        }
+
+        [Fact]
+        public async Task Excluir_DeveRetornarBadRequest_QuandoServicoRetornaFalha()
+        {
+            _serviceMock.Setup(s => s.DeleteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Fail("Não é possível excluir uma reserva confirmada."));
+            var controller = new ReservasController(_serviceMock.Object, _mapper);
+
+            var res = await controller.Delete(Guid.NewGuid()) as BadRequestObjectResult;
+
+            Assert.NotNull(res);
+            Assert.Contains("confirmada", res.Value!.ToString());
         }
     }
 }

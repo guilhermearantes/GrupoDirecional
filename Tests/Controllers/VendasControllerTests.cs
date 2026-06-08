@@ -126,7 +126,6 @@ namespace Tests.Controllers
         public async Task Excluir_DeveRetornarNoContent_QuandoExiste()
         {
             var venda = new Venda { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), ValorPago = 100m, DataVenda = DateTime.UtcNow };
-            _serviceMock.Setup(s => s.GetByIdAsync(venda.Id, It.IsAny<CancellationToken>())).ReturnsAsync(venda);
             _serviceMock.Setup(s => s.DeleteAsync(venda.Id, It.IsAny<CancellationToken>())).ReturnsAsync(Result.Ok()).Verifiable();
             var controller = new VendasController(_serviceMock.Object, _mapper);
 
@@ -139,14 +138,28 @@ namespace Tests.Controllers
         [Fact]
         public async Task Excluir_DeveRetornarBadRequest_QuandoServicoRetornaFalha()
         {
-            var venda = new Venda { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), ValorPago = 100m, DataVenda = DateTime.UtcNow };
-            _serviceMock.Setup(s => s.GetByIdAsync(venda.Id, It.IsAny<CancellationToken>())).ReturnsAsync(venda);
-            _serviceMock.Setup(s => s.DeleteAsync(venda.Id, It.IsAny<CancellationToken>())).ReturnsAsync(Result.Fail("estorno inválido"));
+            _serviceMock.Setup(s => s.DeleteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Fail("estorno inválido"));
             var controller = new VendasController(_serviceMock.Object, _mapper);
 
-            var res = await controller.Delete(venda.Id) as BadRequestObjectResult;
+            var res = await controller.Delete(Guid.NewGuid()) as BadRequestObjectResult;
 
             Assert.NotNull(res);
+            Assert.Contains("estorno inválido", res.Value!.ToString());
+        }
+
+        [Fact]
+        public async Task ObterPorId_DeveRetornarOk_QuandoEncontrado()
+        {
+            var venda = new Venda { Id = Guid.NewGuid(), ClienteId = Guid.NewGuid(), ApartamentoId = Guid.NewGuid(), ValorPago = 350000m, DataVenda = DateTime.UtcNow };
+            _serviceMock.Setup(s => s.GetByIdAsync(venda.Id, It.IsAny<CancellationToken>())).ReturnsAsync(venda);
+            var controller = new VendasController(_serviceMock.Object, _mapper);
+
+            var result = await controller.Get(venda.Id);
+
+            var ok = result.Result as OkObjectResult;
+            Assert.NotNull(ok);
+            Assert.NotNull(ok.Value);
         }
     }
 }
