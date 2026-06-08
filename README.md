@@ -15,7 +15,7 @@ API REST em .NET 9 para gerenciamento de clientes, apartamentos, reservas e vend
 | Banco — desenvolvimento | SQLite (criado automaticamente, sem configuração) |
 | Autenticação | JWT Bearer |
 | Hash de senha | BCrypt.Net-Next |
-| Mapeamento | AutoMapper 12 |
+| Mapeamento | AutoMapper 16 |
 | Documentação interativa | Scalar (OpenAPI 3) |
 | Testes | xUnit · Moq · EF InMemory |
 | Testes de integração | Testcontainers (opcional) |
@@ -350,20 +350,77 @@ O token expira em 60 minutos (configurável via `Jwt__ExpiryMinutes`). Após exp
 
 ### Testes unitários (sem dependências externas)
 
+Os testes unitários e de serviço usam EF Core InMemory e não precisam de banco, Docker ou qualquer configuração adicional.
+
 ```bash
 dotnet test Tests/Tests.csproj --filter "Category!=Integration"
 ```
 
-### Testes de integração (requer docker-compose em execução)
+### Testes de integração (requerem SQL Server)
 
-```bash
+Os testes de integração sobem a aplicação completa via `WebApplicationFactory` e executam fluxos end-to-end contra um SQL Server real. Há três formas de fornecer o banco:
+
+---
+
+#### Opção A — Docker Compose já em execução
+
+Se o ambiente Docker Compose já estiver no ar (`docker compose up`), basta exportar as variáveis de ambiente e rodar os testes:
+
+```powershell
 # PowerShell
-$env:SA_PASSWORD = 'Grup0D!reCional2026'
+$env:SA_PASSWORD         = 'Grup0D!reCional2026'
 $env:TEST_DB_SA_PASSWORD = $env:SA_PASSWORD
-$env:TEST_DB_PORT = '14333'
+$env:TEST_DB_PORT        = '14333'
 
 dotnet test Tests/Tests.csproj --filter "Category=Integration"
 ```
+
+---
+
+#### Opção B — SQL Server isolado via scripts (sem subir a API completa)
+
+Para rodar apenas os testes sem precisar do docker-compose completo, use os scripts na pasta `scripts/`:
+
+```powershell
+# 1. Subir o container do SQL Server e aguardar ele estar pronto
+.\scripts\docker-prep.ps1
+
+# 2. Exportar a senha e rodar os testes
+$env:SA_PASSWORD         = 'Your_password123'
+$env:TEST_DB_SA_PASSWORD = $env:SA_PASSWORD
+dotnet test Tests/Tests.csproj --filter "Category=Integration"
+
+# 3. (Opcional) Limpar o container ao finalizar
+.\scripts\cleanup-containers.ps1
+```
+
+> `docker-prep.ps1` aceita parâmetros: `-SaPassword`, `-HostPort` e `-TimeoutSeconds`. Sem argumentos usa os mesmos defaults das variáveis de ambiente.
+
+---
+
+#### Opção C — Testcontainers (container gerenciado automaticamente)
+
+Se o Docker daemon estiver exposto via TCP na porta 2375, o próprio runner de testes sobe e derruba o container automaticamente:
+
+```powershell
+.\scripts\run-tests.ps1 -UseTestcontainers
+```
+
+> Requer que o Docker esteja configurado para aceitar conexões TCP (`tcp://localhost:2375`). Use `-UseTcpDaemon` se necessário. Em Windows, `-KillTestHost` encerra processos `testhost` que eventualmente fiquem pendurados.
+
+---
+
+Se nenhuma variável de ambiente estiver configurada e o Testcontainers não estiver ativo, os testes de integração são **pulados automaticamente** com uma mensagem explicativa — a suite unitária nunca é bloqueada por ausência de banco.
+
+---
+
+## Scripts utilitários (`scripts/`)
+
+| Script | Finalidade |
+|---|---|
+| `docker-prep.ps1` | Baixa a imagem do SQL Server 2019, sobe o container `desafio-test-sql` na porta 14333 e aguarda a porta TCP estar acessível antes de retornar. |
+| `cleanup-containers.ps1` | Para e remove o container `desafio-test-sql`. Aceita `-RemoveImage` para remover também a imagem local. |
+| `run-tests.ps1` | Wrapper para `dotnet test` que configura variáveis de ambiente do Testcontainers, encerra processos `testhost` pendurados (comum no Windows) e expõe a opção `-UseTestcontainers` para compilar com o símbolo `TESTCONTAINERS`. |
 
 ---
 
