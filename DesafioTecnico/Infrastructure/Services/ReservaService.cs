@@ -26,6 +26,9 @@ namespace DesafioTecnico.Infrastructure.Services
 
         public async Task<Result<Reserva>> CreateAsync(Reserva reserva, CancellationToken ct = default)
         {
+            var cliente = await _uow.Clientes.GetByIdAsync(reserva.ClienteId, ct);
+            if (cliente == null) return Result.Fail<Reserva>("Cliente não encontrado.");
+
             var apt = await _uow.Apartamentos.GetByIdAsync(reserva.ApartamentoId, ct);
             if (apt == null) return Result.Fail<Reserva>("Apartamento não encontrado.");
 

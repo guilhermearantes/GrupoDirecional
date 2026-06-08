@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using DesafioTecnico.Infrastructure.Data;
 using DesafioTecnico.Infrastructure.Security;
@@ -8,20 +7,20 @@ namespace DesafioTecnico.Infrastructure.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _uow;
         private readonly JwtTokenGenerator _tokenGenerator;
         private readonly ILogger<AuthService> _logger;
 
-        public AuthService(AppDbContext context, JwtTokenGenerator tokenGenerator, ILogger<AuthService> logger)
+        public AuthService(IUnitOfWork uow, JwtTokenGenerator tokenGenerator, ILogger<AuthService> logger)
         {
-            _context = context;
+            _uow = uow;
             _tokenGenerator = tokenGenerator;
             _logger = logger;
         }
 
         public async Task<(string Token, int ExpiresInSeconds)?> AuthenticateAsync(string username, string password, CancellationToken ct = default)
         {
-            var user = await _context.Usuarios.FirstOrDefaultAsync(u => u.Username == username, ct);
+            var user = await _uow.Usuarios.GetByUsernameAsync(username, ct);
             if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             {
                 _logger.LogWarning("Login falhou para '{Username}'", username);

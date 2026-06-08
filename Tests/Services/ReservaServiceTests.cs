@@ -45,6 +45,28 @@ namespace Tests.Services
             context.Dispose();
         }
 
+        [Fact]
+        public async Task Criar_DeveRetornarFalha_QuandoClienteNaoEncontrado()
+        {
+            var (context, _, service) = BuildSut("TestDb_CreateReserva_ClienteNotFound");
+
+            var apt = Fixtures.FakeDataBuilder.CreateApartamento();
+            context.Apartamentos.Add(apt);
+            context.SaveChanges();
+
+            var reserva = new DesafioTecnico.Domain.Entities.Reserva
+            {
+                ClienteId = Guid.NewGuid(),
+                ApartamentoId = apt.Id
+            };
+
+            var result = await service.CreateAsync(reserva);
+
+            Assert.True(result.IsFailure);
+            Assert.NotEmpty(result.Error);
+            context.Dispose();
+        }
+
         [Theory]
         [InlineData(DesafioTecnico.Domain.Enums.StatusApartamento.Reservado)]
         [InlineData(DesafioTecnico.Domain.Enums.StatusApartamento.Vendido)]

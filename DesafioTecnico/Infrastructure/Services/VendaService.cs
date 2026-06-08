@@ -26,6 +26,9 @@ namespace DesafioTecnico.Infrastructure.Services
 
         public async Task<Result<Venda>> CreateAsync(Venda venda, CancellationToken ct = default)
         {
+            var cliente = await _uow.Clientes.GetByIdAsync(venda.ClienteId, ct);
+            if (cliente == null) return Result.Fail<Venda>("Cliente não encontrado.");
+
             var apt = await _uow.Apartamentos.GetByIdAsync(venda.ApartamentoId, ct);
             if (apt == null) return Result.Fail<Venda>("Apartamento não encontrado.");
 

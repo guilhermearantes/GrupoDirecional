@@ -26,8 +26,9 @@ namespace Tests.Services
                 })
                 .Build();
 
+            var uow = new UnitOfWork(context);
             var tokenGenerator = new JwtTokenGenerator(config);
-            return new AuthService(context, tokenGenerator, NullLogger<AuthService>.Instance);
+            return new AuthService(uow, tokenGenerator, NullLogger<AuthService>.Instance);
         }
 
         [Fact]

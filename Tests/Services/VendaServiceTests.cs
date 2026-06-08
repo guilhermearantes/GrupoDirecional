@@ -38,6 +38,23 @@ namespace Tests.Services
             Assert.NotEqual(Guid.Empty, result.Value.Id);
         }
 
+        [Fact]
+        public async Task Criar_DeveRetornarFalha_QuandoClienteNaoEncontrado()
+        {
+            var (context, _, service) = BuildSut("TestDb_CreateVenda_ClienteNotFound");
+
+            var apt = Fixtures.FakeDataBuilder.CreateApartamento();
+            context.Apartamentos.Add(apt);
+            context.SaveChanges();
+
+            var venda = Fixtures.FakeDataBuilder.CreateVenda(Guid.NewGuid(), apt.Id);
+            var result = await service.CreateAsync(venda);
+
+            Assert.True(result.IsFailure);
+            Assert.NotEmpty(result.Error);
+            context.Dispose();
+        }
+
         [Theory]
         [InlineData(DesafioTecnico.Domain.Enums.StatusApartamento.Vendido)]
         [InlineData(DesafioTecnico.Domain.Enums.StatusApartamento.Reservado)]

@@ -11,6 +11,7 @@ namespace DesafioTecnico.Infrastructure.Data
         private IApartamentoRepository? _apartamentos;
         private IReservaRepository? _reservas;
         private IVendaRepository? _vendas;
+        private IUsuarioRepository? _usuarios;
 
         public UnitOfWork(AppDbContext context) => _context = context;
 
@@ -18,6 +19,7 @@ namespace DesafioTecnico.Infrastructure.Data
         public IApartamentoRepository Apartamentos => _apartamentos ??= new ApartamentoRepository(_context);
         public IReservaRepository Reservas => _reservas ??= new ReservaRepository(_context);
         public IVendaRepository Vendas => _vendas ??= new VendaRepository(_context);
+        public IUsuarioRepository Usuarios => _usuarios ??= new UsuarioRepository(_context);
 
         public Task<int> CommitAsync(CancellationToken ct = default)
             => _context.SaveChangesAsync(ct);

@@ -12,6 +12,7 @@ namespace DesafioTecnico.Infrastructure.Data
         IApartamentoRepository Apartamentos { get; }
         IReservaRepository Reservas { get; }
         IVendaRepository Vendas { get; }
+        IUsuarioRepository Usuarios { get; }
 
         /// <summary>
         /// Persiste todas as mudanças rastreadas no banco em uma única transação.
