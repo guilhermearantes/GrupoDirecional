@@ -162,7 +162,8 @@ A ordem abaixo respeita as dependências entre entidades:
 
 | Método | Rota                          | Descrição                                    | Auth |
 |--------|-------------------------------|----------------------------------------------|------|
-| POST   | /api/auth/login               | Gerar token JWT                              | Não  |
+| GET    | /health                       | Health check da API e do banco de dados      | Não  |
+| POST   | /api/auth/login               | Gerar token JWT (rate limit: 5 req/min/IP)   | Não  |
 | GET    | /api/clientes                 | Listar clientes (paginado)                   | Sim  |
 | GET    | /api/clientes/{id}            | Obter cliente por ID                         | Sim  |
 | POST   | /api/clientes                 | Cadastrar cliente                            | Sim  |
@@ -245,9 +246,10 @@ Quando o modelo enviado não passa nas anotações de validação dos DTOs, o AS
 ### Apartamento
 
 ```
-Disponivel ──[reservar]──► Reservado ──[confirmar reserva]──► Vendido
-Disponivel ──[venda direta]──────────────────────────────────► Vendido
+Disponivel ──[reservar]──────────► Reservado ──[confirmar reserva]──► Vendido
+Disponivel ──[venda direta]──────────────────────────────────────────► Vendido
 Reservado  ──[cancelar reserva]──► Disponivel
+Vendido    ──[DELETE /vendas/{id}]──► Disponivel
 ```
 
 ### Reserva
@@ -510,7 +512,8 @@ DesafioTecnico/
 
 ### Segurança
 
-- Todos os endpoints (exceto `/api/auth/login`) requerem token JWT válido via `[Authorize]`.
+- Todos os endpoints (exceto `/api/auth/login` e `/health`) requerem token JWT válido via `[Authorize]`.
+- Rate limiting em `/api/auth/login`: máximo de **5 tentativas por minuto por IP** (janela fixa via `RateLimiterMiddleware`). Exceder o limite retorna `429 Too Many Requests`.
 - Segredos (SA_PASSWORD, JWT Key) são lidos de variáveis de ambiente; nunca hardcoded no código versionado.
 - CPF validado por formato `NNN.NNN.NNN-NN` no DTO de entrada.
 - Email e CPF com índice UNIQUE no banco, evitando duplicatas.
