@@ -17,7 +17,7 @@ API REST em .NET 9 para gerenciamento de clientes, apartamentos, reservas e vend
 | Hash de senha | BCrypt.Net-Next |
 | Mapeamento | AutoMapper 16 |
 | Documentação interativa | Scalar (OpenAPI 3) |
-| Testes unitários | xUnit · Moq · EF InMemory — 90 testes, sem dependências externas |
+| Testes unitários | xUnit · Moq · EF InMemory — 99 testes, sem dependências externas |
 | Testes de integração | xUnit · WebApplicationFactory · SQL Server real — 4 testes end-to-end |
 
 ---
@@ -392,7 +392,7 @@ O token expira em 60 minutos (configurável via `Jwt__ExpiryMinutes`). Após exp
 
 ### Testes unitários (sem dependências externas)
 
-90 testes de controllers e serviços usando EF Core InMemory. Não precisam de banco, Docker ou qualquer configuração adicional.
+99 testes de controllers e serviços usando EF Core InMemory. Não precisam de banco, Docker ou qualquer configuração adicional.
 
 ```bash
 dotnet test Tests/Tests.csproj --filter "Category!=Integration"
