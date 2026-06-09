@@ -105,14 +105,23 @@ namespace DesafioTecnico.Api.Controllers
         }
 
         /// <summary>Remove um apartamento pelo identificador único.</summary>
+        /// <remarks>Retorna 409 se o apartamento possuir reservas ou vendas associadas.</remarks>
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
         public async Task<ActionResult> Delete(Guid id, CancellationToken ct = default)
         {
             var existing = await _service.GetByIdAsync(id, ct);
             if (existing == null) return NotFound();
-            await _service.DeleteAsync(id, ct);
+            try
+            {
+                await _service.DeleteAsync(id, ct);
+            }
+            catch (DbUpdateException)
+            {
+                return Conflict(new ErrorResponse("Não é possível excluir um apartamento com reservas ou vendas associadas."));
+            }
             return NoContent();
         }
     }

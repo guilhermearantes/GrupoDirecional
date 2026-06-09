@@ -17,7 +17,7 @@ API REST em .NET 9 para gerenciamento de clientes, apartamentos, reservas e vend
 | Hash de senha | BCrypt.Net-Next |
 | Mapeamento | AutoMapper 16 |
 | Documentação interativa | Scalar (OpenAPI 3) |
-| Testes unitários | xUnit · Moq · EF InMemory — 113 testes, sem dependências externas |
+| Testes unitários | xUnit · Moq · EF InMemory — 114 testes, sem dependências externas |
 | Testes de integração | xUnit · WebApplicationFactory · SQL Server real — 4 testes end-to-end |
 
 ---
@@ -69,7 +69,7 @@ Todos os segredos são lidos de variáveis de ambiente — nenhum valor sensíve
 | `DB_PORT` | Porta do host mapeada para o container do banco. | `14333` |
 | `TEST_DB_PORT` | Porta usada pelos testes de integração. | `14333` |
 | `TEST_DB_SA_PASSWORD` | Senha SA usada nos testes de integração. | Herda `SA_PASSWORD` |
-| `JWT__KEY` | Chave secreta para assinar tokens JWT. **Mínimo 32 caracteres** (requisito técnico do HS256 — chaves menores causam erro na inicialização). | `appsettings.json` tem um valor de 44 chars para `Development`; **obrigatória em produção**. |
+| `JWT__KEY` | Chave secreta para assinar tokens JWT. **Mínimo 32 caracteres** (requisito técnico do HS256 — chaves menores causam erro na inicialização). | `appsettings.Development.json` tem um valor de 55 chars para desenvolvimento local; **obrigatória em produção**. |
 | `JWT__ISSUER` | Issuer declarado no token. | `DesafioTecnicoApi` |
 | `JWT__AUDIENCE` | Audience declarada no token. | `DesafioTecnicoApiUsers` |
 | `JWT__EXPIRY_MINUTES` | Tempo de vida do token em minutos. | `60` |
@@ -173,13 +173,13 @@ A ordem abaixo respeita as dependências entre entidades:
 | GET    | /api/apartamentos/{id}        | Obter apartamento por ID                     | Sim  |
 | POST   | /api/apartamentos             | Cadastrar apartamento (409 se código duplicado) | Sim  |
 | PUT    | /api/apartamentos/{id}        | Atualizar apartamento (409 se código duplicado) | Sim  |
-| DELETE | /api/apartamentos/{id}        | Remover apartamento                          | Sim  |
+| DELETE | /api/apartamentos/{id}        | Remover apartamento (409 se tiver reservas/vendas associadas) | Sim  |
 | GET    | /api/reservas                 | Listar reservas (paginado)                   | Sim  |
 | GET    | /api/reservas/{id}            | Obter reserva por ID                         | Sim  |
 | POST   | /api/reservas                 | Criar reserva (→ apartamento Reservado)      | Sim  |
 | POST   | /api/reservas/{id}/confirm    | Confirmar reserva (→ gera venda + Vendido); retorna `201 Created` com `Location` para a venda criada | Sim  |
 | POST   | /api/reservas/{id}/cancel     | Cancelar reserva (→ apartamento Disponivel)  | Sim  |
-| DELETE | /api/reservas/{id}            | Remover reserva                              | Sim  |
+| DELETE | /api/reservas/{id}            | Remover reserva (400 se confirmada)          | Sim  |
 | GET    | /api/vendas                   | Listar vendas (paginado)                     | Sim  |
 | GET    | /api/vendas/{id}              | Obter venda por ID                           | Sim  |
 | POST   | /api/vendas                   | Registrar venda direta (→ apartamento Vendido)| Sim  |
@@ -394,7 +394,7 @@ O token expira em 60 minutos (configurável via `Jwt__ExpiryMinutes`). Após exp
 
 ### Testes unitários (sem dependências externas)
 
-113 testes de controllers e serviços usando EF Core InMemory. Não precisam de banco, Docker ou qualquer configuração adicional.
+114 testes de controllers e serviços usando EF Core InMemory. Não precisam de banco, Docker ou qualquer configuração adicional.
 
 ```bash
 dotnet test Tests/Tests.csproj --filter "Category!=Integration"
@@ -498,11 +498,11 @@ DesafioTecnico/
 - **Repository + Service pattern**: separa persistência de regras de negócio, facilita testes unitários com InMemory e mocks.
 - **DTOs + AutoMapper**: entidades de domínio não são expostas diretamente; mapeamentos centralizados no `AutoMapperProfile`.
 - **JWT + BCrypt**: autenticação stateless com tokens assinados; senhas armazenadas com hash BCrypt (work factor configurável).
-- **Transação em `VendaService`**: a criação de venda e a atualização de status do apartamento ocorrem em uma única transação de banco de dados, garantindo consistência.
+- **Atomicidade via Unit of Work**: todas as operações que envolvem múltiplas entidades — como confirmar uma reserva (cria venda + atualiza reserva + atualiza apartamento) ou registrar uma venda direta (cria venda + atualiza apartamento) — são persistidas em uma única transação implícita pelo `CommitAsync`. Uma falha no meio reverte tudo.
 - **Exclusão de vendas**: o endpoint `DELETE /api/vendas/{id}` foi incluído por requisito do desafio. Em produção, vendas são registros contábeis — a prática correta é marcar como estornadas (soft delete ou campo de status), nunca remover o registro do banco.
 - **Concorrência em reservas (não implementado no desafio)**: o fluxo de reserva lê o status do apartamento e, em seguida, atualiza — sem locking. Em produção, duas requisições simultâneas poderiam reservar o mesmo apartamento. A solução correta é concorrência otimista via `RowVersion`/`ETag` no `Apartamento`, rejeitando a segunda operação com 409 Conflict.
 - **Preço da venda congelado na reserva (não implementado no desafio)**: ao confirmar uma reserva, o `ValorPago` da venda é calculado com o preço atual do apartamento. Se o valor mudar entre a criação da reserva e sua confirmação, o cliente é cobrado um valor diferente do acordado. O correto seria registrar o valor na `Reserva` e transferi-lo para a `Venda` na confirmação.
-- **Exclusão de clientes com histórico**: a exclusão é bloqueada com 409 Conflict quando o cliente possui reservas ou vendas associadas. O banco de dados rejeita a operação por integridade referencial (FK), e o controller intercepta a `DbUpdateException` retornando a mensagem descritiva ao cliente da API.
+- **Exclusão de clientes ou apartamentos com histórico**: a exclusão é bloqueada com 409 Conflict quando o registro possui reservas ou vendas associadas. O banco de dados rejeita a operação por integridade referencial (FK), e o controller intercepta a `DbUpdateException` retornando a mensagem descritiva ao cliente da API.
 - **Validação do CPF**: o sistema valida o formato `NNN.NNN.NNN-NN`, mas não os dígitos verificadores do algoritmo da Receita Federal. Em produção, utilizaria uma biblioteca de validação de CPF.
 - **Migrations via job separado no Compose**: o serviço `migrations` aplica o `database update` antes da API subir, seguindo a prática de não aplicar migrations em runtime de produção.
 - **Seed automático no startup**: usuário `admin` e dados de demonstração são inseridos na primeira inicialização, com guards idempotentes (`if (!context.X.Any())`).

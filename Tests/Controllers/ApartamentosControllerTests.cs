@@ -150,6 +150,20 @@ namespace Tests.Controllers
         }
 
         [Fact]
+        public async Task Excluir_DeveRetornarConflict_QuandoTemReservasOuVendas()
+        {
+            var apt = Fixtures.FakeDataBuilder.CreateApartamento();
+            _serviceMock.Setup(s => s.GetByIdAsync(apt.Id, It.IsAny<CancellationToken>())).ReturnsAsync(apt);
+            _serviceMock.Setup(s => s.DeleteAsync(apt.Id, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new DbUpdateException("fk constraint", new Exception()));
+            var controller = new ApartamentosController(_serviceMock.Object, _mapper);
+
+            var res = await controller.Delete(apt.Id);
+
+            Assert.IsType<ConflictObjectResult>(res);
+        }
+
+        [Fact]
         public async Task Excluir_DeveRetornarNotFound_QuandoNaoEncontrado()
         {
             _serviceMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Apartamento?)null);
